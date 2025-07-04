@@ -277,7 +277,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"activityId\": \"prompt_self_001\",\n  \"type\": \"self\",\n  \"question\": \"What did you enjoy today?\",\n  \"notePlaceholder\": \"Write your personal reflection here...\",\n  \"saveEnabled\": true,\n  \"sendToPartnerEnabled\": false\n}"
+              "raw": "{\n  \"type\": \"self\",\n  \"question\": \"What did you enjoy today?\",\n  \"notePlaceholder\": \"Write your personal reflection here...\",\n  \"saveEnabled\": true}"
             },
             "url": {
               "raw": "http://localhost:3000/activity",
