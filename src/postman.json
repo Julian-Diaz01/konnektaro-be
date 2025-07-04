@@ -1,0 +1,336 @@
+{
+  "info": {
+    "_postman_id": "f32843e2-b911-4b4b-9848-b5ed7d370fa7",
+    "name": "Tour API v2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Session",
+      "item": [
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Session\",\n  \"description\": \"Berlin walk\",\n  \"picture\": \"https://pic.url\",\n  \"activityIds\": [\"prompt_self_001\", \"prompt_partner_002\"]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/session",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["session"]
+            }
+          }
+        },
+        {
+          "name": "Get Session by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/session/{{sessionId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["session", "{{sessionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users in Session",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/session/{{sessionId}}/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["session", "{{sessionId}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Pair Users for Activity",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/session/{{sessionId}}/pair-users/{{activityId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["session", "{{sessionId}}", "pair-users", "{{activityId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/user",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Create Users (Personas)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vault:tour-token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n    \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"sessionId\": \"{{sessionId}}\"}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/user",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Create User - Pepe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vault:tour-token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pepe\",\n  \"email\": \"pepe@tour.com\",\n    \"icon\": \"🐎\",\n  \"description\": \"Loves Pokemon and Speed\",\n  \"sessionId\": \"{{sessionId}}\"}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/user",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Create User - Twinkle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vault:tour-token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Twinkle\",\n  \"email\": \"twinkle@tour.com\",\n    \"icon\": \"🐻\",\n  \"description\": \"Loves Pepe and ⭐️\",\n  \"sessionId\": \"{{sessionId}}\"}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/user",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Create User - Blu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{vault:tour-token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Blu\",\n  \"email\": \"blu@tour.com\",\n    \"icon\": \"🐰\",\n  \"description\": \"Loves her mama\",\n  \"sessionId\": \"{{sessionId}}\"}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/user",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/user/{{userId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gugan Updated\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"Updated desc\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/user/{{userId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/user/{{userId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["user", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activity",
+      "item": [
+        {
+          "name": "Create Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activityId\": \"prompt_self_001\",\n  \"type\": \"self\",\n  \"question\": \"What did you enjoy today?\",\n  \"notePlaceholder\": \"Write your personal reflection here...\",\n  \"saveEnabled\": true,\n  \"sendToPartnerEnabled\": false\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/activity",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["activity"]
+            }
+          }
+        },
+        {
+          "name": "Get All Activities",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/activity",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["activity"]
+            }
+          }
+        },
+        {
+          "name": "Get Activity by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/activity/{{activityId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["activity", "{{activityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Activity",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
+            "url": {
+              "raw": "http://localhost:3000/activity/{{activityId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["activity", "{{activityId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
