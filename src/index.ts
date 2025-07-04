@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Must be called before accessing environment variables
+dotenv.config();
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';

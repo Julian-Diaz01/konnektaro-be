@@ -3,6 +3,7 @@ import {getUserCollection} from '../collections/userCollection'
 import {createUser, User} from '../models/user'
 
 const router = Router()
+console.log("🐱 Initializing /user routes")
 
 // Create User
 router.post('/', async (req: Request, res: Response) => {

@@ -6,6 +6,7 @@ import {ActivityGroup} from "../models/activity";
 import {User} from "../models/user";
 
 const router = Router()
+console.log("🐀 Initializing /session routes")
 
 // 🔐 Helper: Check if the user is admin
 const isAdmin = (req: Request): boolean => {
@@ -60,11 +61,15 @@ router.get('/:sessionId/users', async (req: Request, res: Response) => {
 })
 
 // Pair Users
-router.post('/session/:sessionId/pair-users/:activityId', async (req: Request, res: Response) => {
+router.post('/:sessionId/pair-users/:activityId', async (req: Request, res: Response) => {
     const { sessionId, activityId } = req.params
-    const collection = getUserCollection()
-    const users = await collection.find({ sessionId }).toArray()
+
+    const userCollection = getUserCollection()
+    const sessionCollection = getSessionCollection()
+
+    const users = await userCollection.find({ sessionId }).toArray()
     const shuffled = users.sort(() => Math.random() - 0.5)
+
     let groupCounter = 1
 
     for (let i = 0; i < shuffled.length; i += 2) {
@@ -79,8 +84,15 @@ router.post('/session/:sessionId/pair-users/:activityId', async (req: Request, r
                 partnerName: partner?.name
             }
 
-            const updatedGroups = [...(user.groups || []).filter(g => g.activityId !== activityId), groupEntry]
-            await collection.updateOne({ userId: user.userId }, { $set: { groups: updatedGroups } })
+            const updatedGroups = [
+                ...(user.activities || []).filter(g => g.activityId !== activityId),
+                groupEntry
+            ]
+
+            await userCollection.updateOne(
+                { userId: user.userId },
+                { $set: { groups: updatedGroups } }
+            )
         }
 
         if (userB) {
@@ -93,7 +105,13 @@ router.post('/session/:sessionId/pair-users/:activityId', async (req: Request, r
         groupCounter++
     }
 
-    const updatedUsers = await collection.find({ sessionId }).toArray()
+    // Update the session to include this activityId if not already present
+    await sessionCollection.updateOne(
+        { sessionId },
+        { $addToSet: { activityIds: activityId } }
+    )
+
+    const updatedUsers = await userCollection.find({ sessionId }).toArray()
     res.json({ users: updatedUsers })
 })
 
