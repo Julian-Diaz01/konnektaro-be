@@ -4,6 +4,8 @@ dotenv.config(); // Must be called before accessing environment variables
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import { connectDB } from './db';
+import userRoutes from './routes/userRoutes'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -25,9 +27,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.get('/', (req: Request, res: Response) => {
     res.send('API is running')
 })
+app.use('/user', userRoutes)
 
 // Start the server
 const start = async () => {
+    await connectDB()
     app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`)
     })
