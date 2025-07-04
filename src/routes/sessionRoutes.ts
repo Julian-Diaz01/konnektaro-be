@@ -85,7 +85,7 @@ router.post('/:sessionId/pair-users/:activityId', async (req: Request, res: Resp
             }
 
             const updatedGroups = [
-                ...(user.activities || []).filter(g => g.activityId !== activityId),
+                ...(user.groups || []).filter(g => g.activityId !== activityId),
                 groupEntry
             ]
 

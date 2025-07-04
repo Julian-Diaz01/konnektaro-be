@@ -11,7 +11,7 @@ export interface User {
     icon: string
     description: string
     role: Role
-    activities?: ActivityGroup[]
+    groups?: ActivityGroup[]
 }
 
 
