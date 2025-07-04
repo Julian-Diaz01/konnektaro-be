@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import {ActivityGroup} from "./activity";
 
 export type Role = 'admin' | 'user'
 
@@ -9,10 +10,10 @@ export interface User {
     email: string
     icon: string
     description: string
-    group?: number
-    partnerId?: string
     role: Role
+    groups?: ActivityGroup[]
 }
+
 
 export const createUser = (data: Omit<User, 'userId'>): User => {
     return {
