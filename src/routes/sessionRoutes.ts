@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express'
 import { getSessionCollection } from '../collections/sessionCollection'
 import { getUserCollection } from '../collections/userCollection'
 import { createSession } from '../models/session'
+import {ActivityGroup} from "../models/activity";
+import {User} from "../models/user";
 
 const router = Router()
 
@@ -58,33 +60,34 @@ router.get('/:sessionId/users', async (req: Request, res: Response) => {
 })
 
 // Pair Users
-router.post('/:sessionId/pair-users', async (req: Request, res: Response) => {
-    const { sessionId } = req.params
+router.post('/session/:sessionId/pair-users/:activityId', async (req: Request, res: Response) => {
+    const { sessionId, activityId } = req.params
     const collection = getUserCollection()
-
     const users = await collection.find({ sessionId }).toArray()
     const shuffled = users.sort(() => Math.random() - 0.5)
-
     let groupCounter = 1
 
     for (let i = 0; i < shuffled.length; i += 2) {
         const userA = shuffled[i]
         const userB = shuffled[i + 1]
 
+        const updateUserGroup = async (user: User, partner?: User) => {
+            const groupEntry: ActivityGroup = {
+                activityId,
+                group: groupCounter,
+                partnerId: partner?.userId,
+                partnerName: partner?.name
+            }
+
+            const updatedGroups = [...(user.groups || []).filter(g => g.activityId !== activityId), groupEntry]
+            await collection.updateOne({ userId: user.userId }, { $set: { groups: updatedGroups } })
+        }
+
         if (userB) {
-            await collection.updateOne(
-                { userId: userA.userId },
-                { $set: { group: groupCounter, partnerId: userB.userId } }
-            )
-            await collection.updateOne(
-                { userId: userB.userId },
-                { $set: { group: groupCounter, partnerId: userA.userId } }
-            )
+            await updateUserGroup(userA, userB)
+            await updateUserGroup(userB, userA)
         } else {
-            await collection.updateOne(
-                { userId: userA.userId },
-                { $set: { group: groupCounter, partnerId: undefined } }
-            )
+            await updateUserGroup(userA)
         }
 
         groupCounter++

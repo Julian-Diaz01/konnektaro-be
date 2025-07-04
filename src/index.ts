@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import { connectDB } from './db';
 import userRoutes from './routes/userRoutes'
 import sessionRoutes from "./routes/sessionRoutes";
+import activityRoutes from "./routes/activityRoutes";
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -30,6 +31,7 @@ app.get('/', (req: Request, res: Response) => {
 })
 app.use('/user', userRoutes)
 app.use('/session', sessionRoutes)
+app.use('/activity', activityRoutes)
 
 // Start the server
 const start = async () => {
