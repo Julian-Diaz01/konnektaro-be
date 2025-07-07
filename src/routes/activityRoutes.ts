@@ -1,6 +1,7 @@
 import {Router, Request, Response} from 'express'
 import {getActivityCollection} from '../collections/activityCollection'
 import {createActivity} from '../models/activity'
+import {verifyFirebaseToken} from "../middleware/authMiddleware";
 
 const router = Router()
 console.log("🐈 Initializing /activity routes")
@@ -27,14 +28,14 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // Get All Activities
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', verifyFirebaseToken, async (_req: Request, res: Response) => {
     const collection = getActivityCollection()
     const activities = await collection.find({}).toArray()
     res.json(activities)
 })
 
 // Get Activity by ID
-router.get('/:activityId', async (req: Request, res: Response) => {
+router.get('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {activityId} = req.params
     const collection = getActivityCollection()
     const activity = await collection.findOne({activityId})
@@ -45,7 +46,7 @@ router.get('/:activityId', async (req: Request, res: Response) => {
 })
 
 // Delete Activity
-router.delete('/:activityId', async (req: Request, res: Response) => {
+router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {activityId} = req.params
     const collection = getActivityCollection()
     const result = await collection.deleteOne({activityId})

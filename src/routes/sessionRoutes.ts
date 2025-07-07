@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express'
-import { getSessionCollection } from '../collections/sessionCollection'
-import { getUserCollection } from '../collections/userCollection'
-import { createSession } from '../models/session'
+import {Router, Request, Response} from 'express'
+import {getSessionCollection} from '../collections/sessionCollection'
+import {getUserCollection} from '../collections/userCollection'
+import {createSession} from '../models/session'
 import {ActivityGroup} from "../models/activity";
 import {User} from "../models/user";
+import {verifyFirebaseToken} from "../middleware/authMiddleware";
 
 const router = Router()
 console.log("🐀 Initializing /session routes")
@@ -15,18 +16,18 @@ const isAdmin = (req: Request): boolean => {
 }
 
 // Create Session (admin only)
-router.post('/', async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-        return res.status(403).json({ error: 'Only admins can create sessions' })
-    }
+router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
+    /*   if (!isAdmin(req)) {
+           return res.status(403).json({ error: 'Only admins can create sessions' })
+       }*/
 
-    const { name, description, picture, activityIds } = req.body
+    const {name, description, picture, activityIds} = req.body
 
     if (!name || !description || !Array.isArray(activityIds)) {
-        return res.status(400).json({ error: 'Missing required fields' })
+        return res.status(400).json({error: 'Missing required fields'})
     }
 
-    const session = createSession({ name, description, picture, activityIds })
+    const session = createSession({name, description, picture, activityIds})
     const collection = getSessionCollection()
     await collection.insertOne(session)
 
@@ -34,40 +35,40 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // Get session by ID
-router.get('/:sessionId', async (req: Request, res: Response) => {
-    const { sessionId } = req.params
+router.get('/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {sessionId} = req.params
     const collection = getSessionCollection()
-    const session = await collection.findOne({ sessionId })
+    const session = await collection.findOne({sessionId})
 
-    if (!session) return res.status(404).json({ error: 'Session not found' })
+    if (!session) return res.status(404).json({error: 'Session not found'})
 
     res.json(session)
 })
 
 // List all sessions
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', verifyFirebaseToken, async (_req: Request, res: Response) => {
     const collection = getSessionCollection()
     const sessions = await collection.find({}).toArray()
     res.json(sessions)
 })
 
 // Get all users in a session
-router.get('/:sessionId/users', async (req: Request, res: Response) => {
-    const { sessionId } = req.params
+router.get('/:sessionId/users', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {sessionId} = req.params
     const collection = getUserCollection()
 
-    const users = await collection.find({ sessionId }).toArray()
+    const users = await collection.find({sessionId}).toArray()
     res.json(users)
 })
 
 // Pair Users
-router.post('/:sessionId/pair-users/:activityId', async (req: Request, res: Response) => {
-    const { sessionId, activityId } = req.params
+router.post('/:sessionId/pair-users/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {sessionId, activityId} = req.params
 
     const userCollection = getUserCollection()
     const sessionCollection = getSessionCollection()
 
-    const users = await userCollection.find({ sessionId }).toArray()
+    const users = await userCollection.find({sessionId}).toArray()
     const shuffled = users.sort(() => Math.random() - 0.5)
 
     let groupCounter = 1
@@ -90,8 +91,8 @@ router.post('/:sessionId/pair-users/:activityId', async (req: Request, res: Resp
             ]
 
             await userCollection.updateOne(
-                { userId: user.userId },
-                { $set: { groups: updatedGroups } }
+                {userId: user.userId},
+                {$set: {groups: updatedGroups}}
             )
         }
 
@@ -107,12 +108,12 @@ router.post('/:sessionId/pair-users/:activityId', async (req: Request, res: Resp
 
     // Update the session to include this activityId if not already present
     await sessionCollection.updateOne(
-        { sessionId },
-        { $addToSet: { activityIds: activityId } }
+        {sessionId},
+        {$addToSet: {activityIds: activityId}}
     )
 
-    const updatedUsers = await userCollection.find({ sessionId }).toArray()
-    res.json({ users: updatedUsers })
+    const updatedUsers = await userCollection.find({sessionId}).toArray()
+    res.json({users: updatedUsers})
 })
 
 export default router

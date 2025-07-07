@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { connectDB } from './db';
@@ -11,24 +11,21 @@ import activityRoutes from "./routes/activityRoutes";
 
 const app = express()
 const PORT = process.env.PORT || 3000
-const API_KEY = process.env.API_KEY
 
 app.use(cors())
 app.use(bodyParser.json())
-
-// Security middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
-    const auth = req.headers.authorization
-    if (!auth || auth !== `Bearer ${API_KEY}`) {
-        return res.status(403).json({ error: 'Unauthorized' })
-    }
-    next()
-})
 
 // Health check route
 app.get('/', (req: Request, res: Response) => {
     res.send('API is running')
 })
+
+app.get('/api/firebase-key', (req, res) => {
+    res.json({
+        apiKey: process.env.FIREBASE_API_KEY,
+    });
+});
+
 app.use('/user', userRoutes)
 app.use('/session', sessionRoutes)
 app.use('/activity', activityRoutes)

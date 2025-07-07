@@ -1,16 +1,17 @@
 import {Request, Response, Router} from 'express'
 import {getUserCollection} from '../collections/userCollection'
 import {createUser, User} from '../models/user'
+import {verifyFirebaseToken} from "../middleware/authMiddleware";
 
 const router = Router()
 console.log("🐱 Initializing /user routes")
 
 // Create User
-router.post('/', async (req: Request, res: Response) => {
-    const { name, icon, description, sessionId, email } = req.body
+router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {name, icon, description, sessionId, email} = req.body
 
     if (!name || !icon || !description || !sessionId || !email) {
-        return res.status(400).json({ error: 'Missing required fields' })
+        return res.status(400).json({error: 'Missing required fields'})
     }
 
     const user = createUser({
@@ -25,20 +26,20 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // Read User
-router.get('/:userId', async (req: Request, res: Response) => {
-    const { userId } = req.params
+router.get('/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {userId} = req.params
     const collection = getUserCollection()
-    const user = await collection.findOne({ userId })
+    const user = await collection.findOne({userId})
 
-    if (!user) return res.status(404).json({ error: 'User not found' })
+    if (!user) return res.status(404).json({error: 'User not found'})
 
     res.json(user)
 })
 
 // Update User
-router.put('/:userId', async (req: Request, res: Response) => {
-    const { userId } = req.params
-    const { name, icon, description, sessionId, group } = req.body
+router.put('/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {userId} = req.params
+    const {name, icon, description, sessionId, group} = req.body
 
     const collection = getUserCollection()
     const updatedUser: User | null = await collection.findOneAndUpdate(
@@ -47,20 +48,20 @@ router.put('/:userId', async (req: Request, res: Response) => {
         {returnDocument: 'after'}
     )
 
-    if (!updatedUser) return res.status(404).json({ error: 'User not found' })
+    if (!updatedUser) return res.status(404).json({error: 'User not found'})
 
     res.json(updatedUser)
 })
 
 // Delete User
-router.delete('/:userId', async (req: Request, res: Response) => {
-    const { userId } = req.params
+router.delete('/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {userId} = req.params
     const collection = getUserCollection()
-    const result = await collection.deleteOne({ userId })
+    const result = await collection.deleteOne({userId})
 
-    if (result.deletedCount === 0) return res.status(404).json({ error: 'User not found' })
+    if (result.deletedCount === 0) return res.status(404).json({error: 'User not found'})
 
-    res.json({ success: true })
+    res.json({success: true})
 })
 
 

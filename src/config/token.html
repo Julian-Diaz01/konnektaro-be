@@ -1,0 +1,35 @@
+<!-- anonymous-token.html -->
+<script type="module">
+    import {initializeApp} from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js'
+    import {getAuth, signInAnonymously} from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js'
+
+    async function getFirebaseConfig() {
+        const response = await fetch('http://localhost:8080/api/firebase-key');
+        const data = await response.json();
+        console.log(data)
+        return {
+            apiKey: data.apiKey,
+            authDomain: "konnektar-5e73f.firebaseapp.com",
+            projectId: "konnektar-5e73f",
+            storageBucket: "konnektar-5e73f.firebasestorage.app",
+            messagingSenderId: "451930734637",
+            appId: "1:451930734637:web:bf6ec39db601eda5c9f8a4",
+            measurementId: "G-XHGG0BLCXS"
+        };
+    }
+
+    getFirebaseConfig().then(firebaseConfig => {
+
+        const app = initializeApp(firebaseConfig)
+        const auth = getAuth(app)
+
+        signInAnonymously(auth).then(result =>
+            result.user.getIdToken().then(token => {
+                document.body.innerText = 'Token copied to console'
+                console.log('Anonymous token:', token)
+            })
+        )
+    });
+
+
+</script>
