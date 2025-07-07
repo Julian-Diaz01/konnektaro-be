@@ -15,7 +15,7 @@ let db: Db
 export const connectDB = async () => {
     try {
         await client.connect()
-        db = client.db('nannatour') // use your actual DB name
+        db = client.db('konnektaro') // use your actual DB name
         await db.command({ ping: 1 })
         console.log('✅ MongoDB connected')
     } catch (err) {

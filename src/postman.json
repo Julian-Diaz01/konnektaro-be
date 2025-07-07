@@ -21,10 +21,10 @@
               "raw": "{\n  \"name\": \"Morning Session\",\n  \"description\": \"Berlin walk\",\n  \"picture\": \"https://pic.url\",\n  \"activityIds\": [\"prompt_self_001\", \"prompt_partner_002\"]\n}"
             },
             "url": {
-              "raw": "http://localhost:3000/session",
+              "raw": "http://localhost:8080/session",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["session"]
             }
           }
@@ -35,10 +35,10 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/session/{{sessionId}}",
+              "raw": "http://localhost:8080/session/{{sessionId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["session", "{{sessionId}}"]
             }
           }
@@ -49,10 +49,10 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/session/{{sessionId}}/users",
+              "raw": "http://localhost:8080/session/{{sessionId}}/users",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["session", "{{sessionId}}", "users"]
             }
           }
@@ -63,10 +63,10 @@
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/session/{{sessionId}}/pair-users/{{activityId}}",
+              "raw": "http://localhost:8080/session/{{sessionId}}/pair-users/{{activityId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["session", "{{sessionId}}", "pair-users", "{{activityId}}"]
             }
           }
@@ -89,10 +89,10 @@
               "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"user\"\n}"
             },
             "url": {
-              "raw": "http://localhost:3000/user",
+              "raw": "http://localhost:8080/user",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user"]
             }
           }
@@ -118,10 +118,10 @@
               "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n    \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"sessionId\": \"{{sessionId}}\"}"
             },
             "url": {
-              "raw": "http://localhost:3000/user",
+              "raw": "http://localhost:8080/user",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user"]
             }
           }
@@ -147,10 +147,10 @@
               "raw": "{\n  \"name\": \"Pepe\",\n  \"email\": \"pepe@tour.com\",\n    \"icon\": \"🐎\",\n  \"description\": \"Loves Pokemon and Speed\",\n  \"sessionId\": \"{{sessionId}}\"}"
             },
             "url": {
-              "raw": "http://localhost:3000/user",
+              "raw": "http://localhost:8080/user",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user"]
             }
           }
@@ -176,10 +176,10 @@
               "raw": "{\n  \"name\": \"Twinkle\",\n  \"email\": \"twinkle@tour.com\",\n    \"icon\": \"🐻\",\n  \"description\": \"Loves Pepe and ⭐️\",\n  \"sessionId\": \"{{sessionId}}\"}"
             },
             "url": {
-              "raw": "http://localhost:3000/user",
+              "raw": "http://localhost:8080/user",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user"]
             }
           }
@@ -205,10 +205,10 @@
               "raw": "{\n  \"name\": \"Blu\",\n  \"email\": \"blu@tour.com\",\n    \"icon\": \"🐰\",\n  \"description\": \"Loves her mama\",\n  \"sessionId\": \"{{sessionId}}\"}"
             },
             "url": {
-              "raw": "http://localhost:3000/user",
+              "raw": "http://localhost:8080/user",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user"]
             }
           }
@@ -219,10 +219,10 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/user/{{userId}}",
+              "raw": "http://localhost:8080/user/{{userId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user", "{{userId}}"]
             }
           }
@@ -240,10 +240,10 @@
               "raw": "{\n  \"name\": \"Gugan Updated\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"Updated desc\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"user\"\n}"
             },
             "url": {
-              "raw": "http://localhost:3000/user/{{userId}}",
+              "raw": "http://localhost:8080/user/{{userId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user", "{{userId}}"]
             }
           }
@@ -254,10 +254,10 @@
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/user/{{userId}}",
+              "raw": "http://localhost:8080/user/{{userId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["user", "{{userId}}"]
             }
           }
@@ -280,10 +280,10 @@
               "raw": "{\n  \"type\": \"self\",\n  \"question\": \"What did you enjoy today?\",\n  \"notePlaceholder\": \"Write your personal reflection here...\",\n  \"saveEnabled\": true}"
             },
             "url": {
-              "raw": "http://localhost:3000/activity",
+              "raw": "http://localhost:8080/activity",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["activity"]
             }
           }
@@ -294,10 +294,10 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/activity",
+              "raw": "http://localhost:8080/activity",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["activity"]
             }
           }
@@ -308,10 +308,10 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/activity/{{activityId}}",
+              "raw": "http://localhost:8080/activity/{{activityId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["activity", "{{activityId}}"]
             }
           }
@@ -322,10 +322,10 @@
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:3000/activity/{{activityId}}",
+              "raw": "http://localhost:8080/activity/{{activityId}}",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "3000",
+              "port": "8080",
               "path": ["activity", "{{activityId}}"]
             }
           }
