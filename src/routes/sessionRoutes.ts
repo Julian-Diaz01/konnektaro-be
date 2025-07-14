@@ -1,12 +1,13 @@
-import { Router, Request, Response } from 'express'
-import { getSessionCollection } from '../collections/sessionCollection'
-import { getUserCollection } from '../collections/userCollection'
-import { createSession } from '../models/session'
-import { ParticipantUser } from '../models/user'
-import { verifyFirebaseToken } from '../middleware/authMiddleware'
-import { ActivityGroupItem, createGroupActivity } from '../models/groupActivity'
-import { v4 as uuidv4 } from 'uuid'
-import { getGroupActivityCollection } from '../collections/getGroupActivityCollection'
+import {Router, Request, Response} from 'express'
+import {getSessionCollection} from '../collections/sessionCollection'
+import {getUserCollection} from '../collections/userCollection'
+import {createSession} from '../models/session'
+import {ParticipantUser} from '../models/user'
+import {verifyFirebaseToken} from '../middleware/authMiddleware'
+import {ActivityGroupItem, createGroupActivity} from '../models/groupActivity'
+import {v4 as uuidv4} from 'uuid'
+import {getGroupActivityCollection} from '../collections/getGroupActivityCollection'
+import {chunk} from 'lodash'
 
 const router = Router()
 console.log('🐀 Initializing /session routes')
@@ -20,13 +21,13 @@ const isAdmin = (req: Request): boolean => {
 // Create Session (admin only)
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({ error: 'Only admins can create sessions' })
+        return res.status(403).json({error: 'Only admins can create sessions'})
     }
 
-    const { name, description, picture, activityIds } = req.body
+    const {name, description, picture, activityIds} = req.body
 
     if (!name || !description || !Array.isArray(activityIds)) {
-        return res.status(400).json({ error: 'Missing required fields' })
+        return res.status(400).json({error: 'Missing required fields'})
     }
 
     const session = createSession({
@@ -47,14 +48,14 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
 // Get session by ID (admin only)
 router.get('/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({ error: 'Only admins can view sessions' })
+        return res.status(403).json({error: 'Only admins can view sessions'})
     }
 
-    const { sessionId } = req.params
+    const {sessionId} = req.params
     const collection = getSessionCollection()
-    const session = await collection.findOne({ sessionId })
+    const session = await collection.findOne({sessionId})
 
-    if (!session) return res.status(404).json({ error: 'Session not found' })
+    if (!session) return res.status(404).json({error: 'Session not found'})
 
     res.json(session)
 })
@@ -62,7 +63,7 @@ router.get('/:sessionId', verifyFirebaseToken, async (req: Request, res: Respons
 // List all sessions (admin only)
 router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({ error: 'Only admins can list sessions' })
+        return res.status(403).json({error: 'Only admins can list sessions'})
     }
 
     const collection = getSessionCollection()
@@ -73,40 +74,40 @@ router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
 // Delete session (admin only)
 router.delete('/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({ error: 'Only admins can delete sessions' })
+        return res.status(403).json({error: 'Only admins can delete sessions'})
     }
 
-    const { sessionId } = req.params
+    const {sessionId} = req.params
     const collection = getSessionCollection()
-    await collection.deleteOne({ sessionId })
-    res.json({ message: 'Session deleted' })
+    await collection.deleteOne({sessionId})
+    res.json({message: 'Session deleted'})
 })
 
 // Remove user from session (admin only)
 router.post('/:sessionId/remove-user/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({ error: 'Only admins can remove users' })
+        return res.status(403).json({error: 'Only admins can remove users'})
     }
 
-    const { sessionId, userId } = req.params
+    const {sessionId, userId} = req.params
     const userCollection = getUserCollection()
     const sessionCollection = getSessionCollection()
 
-    await userCollection.deleteOne({ userId, sessionId })
+    await userCollection.deleteOne({userId, sessionId})
     await sessionCollection.updateOne(
-        { sessionId },
-        { $pull: { participantIds: userId } }
+        {sessionId},
+        {$pull: {participantIds: userId}}
     )
 
-    res.json({ message: 'User removed from session' })
+    res.json({message: 'User removed from session'})
 })
 
 // Get all users in a session
 router.get('/:sessionId/users', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const { sessionId } = req.params
+    const {sessionId} = req.params
     const collection = getUserCollection()
 
-    const users = await collection.find({ sessionId }).toArray()
+    const users = await collection.find({sessionId}).toArray()
     res.json(users)
 })
 
@@ -116,55 +117,46 @@ router.post(
     verifyFirebaseToken,
     async (req: Request, res: Response) => {
         try {
-            const { sessionId, activityId } = req.params
+            const {sessionId, activityId} = req.params
 
             const userCollection = getUserCollection()
             const sessionCollection = getSessionCollection()
             const groupCollection = getGroupActivityCollection()
 
             // Remove previous groups for this activity if re-triggered
-            await groupCollection.deleteMany({ activityId })
+            await groupCollection.deleteMany({activityId})
 
             const users = await userCollection
-                .find({ sessionId }, { projection: { userId: 1, name: 1, icon: 1 } })
+                .find({sessionId}, {projection: {userId: 1, name: 1, icon: 1}})
                 .toArray()
 
             if (users.length === 0) {
-                return res.status(404).json({ message: 'No users found for this session' })
+                return res.status(404).json({message: 'No users found for this session'})
             }
 
             const shuffled = [...users].sort(() => Math.random() - 0.5)
             const groupColors = ['red', 'blue', 'green', 'yellow']
             const groups: ActivityGroupItem[] = []
-            let groupNumber = 1
 
-            for (let i = 0; i < shuffled.length; i += 2) {
-                const userA = shuffled[i]
-                const userB = shuffled[i + 1]
+            const pairs = chunk(shuffled, 2)
 
-                const participants: ParticipantUser[] = [
-                    { userId: userA.userId, name: userA.name, icon: userA.icon }
-                ]
+            pairs.forEach((pair: any[], index: number) => {
+                const participants: ParticipantUser[] = pair.map(user => ({
+                    userId: user.userId,
+                    name: user.name,
+                    icon: user.icon,
+                    description: user.description
+                }))
 
-                if (userB) {
-                    participants.push({
-                        userId: userB.userId,
-                        name: userB.name,
-                        icon: userB.icon
-                    })
-                }
-
-                const groupColor = groupColors[(groupNumber - 1) % groupColors.length]
+                const groupColor = groupColors[index % groupColors.length]
 
                 groups.push({
                     groupId: uuidv4(),
-                    groupNumber,
+                    groupNumber: index + 1,
                     groupColor,
                     participants
                 })
-
-                groupNumber++
-            }
+            })
 
             const groupActivity = createGroupActivity({
                 activityId,
@@ -175,14 +167,14 @@ router.post(
             await groupCollection.insertOne(groupActivity)
 
             await sessionCollection.updateOne(
-                { sessionId },
-                { $addToSet: { activityIds: activityId } }
+                {sessionId},
+                {$addToSet: {activityIds: activityId}}
             )
 
             res.status(201).json(groupActivity)
         } catch (error) {
             console.error('Error creating group activity:', error)
-            res.status(500).json({ message: 'Internal server error' })
+            res.status(500).json({message: 'Internal server error'})
         }
     }
 )
