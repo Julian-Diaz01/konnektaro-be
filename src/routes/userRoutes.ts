@@ -2,26 +2,38 @@ import {Request, Response, Router} from 'express'
 import {getUserCollection} from '../collections/userCollection'
 import {createUser, User} from '../models/user'
 import {verifyFirebaseToken} from "../middleware/authMiddleware";
+import {getSessionCollection} from "../collections/sessionCollection";
 
 const router = Router()
 console.log("🐱 Initializing /user routes")
 
 // Create User
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {name, icon, description, sessionId, email} = req.body
+    const { sessionId, name, email, icon, description, role } = req.body
 
-    if (!name || !icon || !description || !sessionId || !email) {
-        return res.status(400).json({error: 'Missing required fields'})
+    if (!sessionId || !name || !email || !icon || !description || !role) {
+        return res.status(400).json({ error: 'Missing required fields' })
+    }
+
+    const sessionCollection = getSessionCollection()
+    const session = await sessionCollection.findOne({ sessionId })
+
+    if (!session || !session.open) {
+        return res.status(400).json({ error: 'Session not found or not open' })
     }
 
     const user = createUser({
-        name, icon, description, sessionId, email,
-        role: 'user'
+        sessionId,
+        name,
+        email,
+        icon,
+        description,
+        role,
+        userActivityIds: []
     })
 
     const collection = getUserCollection()
     await collection.insertOne(user)
-
     res.status(201).json(user)
 })
 

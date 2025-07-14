@@ -13,7 +13,7 @@ export interface User {
     userActivityIds?: string[]
 }
 
-export type ParticipantUser = Pick<User, 'userId' | 'name' | 'icon'>
+export type ParticipantUser = Pick<User, 'userId' | 'name' | 'icon' | 'description'>
 
 export const createUser = (data: Omit<User, 'userId'>): User => {
     return {

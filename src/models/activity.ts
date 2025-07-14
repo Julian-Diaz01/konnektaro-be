@@ -5,11 +5,10 @@ export type ActivityType = 'self' | 'partner'
 export interface Activity {
     activityId: string
     sessionId: string
-    order: number
+    date: string
     type: ActivityType
     question: string
     title: string
-    activityGroupIds: []
 }
 
 
