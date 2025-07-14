@@ -4,18 +4,14 @@ export type ActivityType = 'self' | 'partner'
 
 export interface Activity {
     activityId: string
+    sessionId: string
+    order: number
     type: ActivityType
     question: string
-    saveEnabled: boolean
-    sendToPartner: true
+    title: string
+    activityGroupIds: []
 }
 
-export interface ActivityGroup {
-    activityId: string
-    group: number
-    partnerId?: string
-    partnerName?: string
-}
 
 export const createActivity = (data: Omit<Activity, 'activityId'>): Activity => {
     return {

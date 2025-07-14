@@ -5,7 +5,9 @@ export interface Session {
     name: string
     description: string
     picture?: string
-    activityIds: string[]
+    activityIds?: string[]
+    open: boolean
+    participantIds: string[]
 }
 
 export const createSession = (data: Omit<Session, 'sessionId'>): Session => {

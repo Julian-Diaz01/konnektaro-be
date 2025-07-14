@@ -8,19 +8,13 @@ console.log("🐈 Initializing /activity routes")
 
 // Create Activity
 router.post('/', async (req: Request, res: Response) => {
-    const {type, question, saveEnabled, sendToPartner} = req.body
 
-    if (!type || !question) {
+    if (!req.body.type || !req.body.question) {
         return res.status(400).json({error: 'Missing required fields'})
     }
 
+    const activity = createActivity(req.body)
 
-    const activity = createActivity({
-        type,
-        question,
-        saveEnabled: saveEnabled ?? true,
-        sendToPartner: sendToPartner ?? false,
-    })
     const collection = getActivityCollection()
 
     await collection.insertOne(activity)

@@ -2,9 +2,11 @@ import {Router, Request, Response} from 'express'
 import {getSessionCollection} from '../collections/sessionCollection'
 import {getUserCollection} from '../collections/userCollection'
 import {createSession} from '../models/session'
-import {ActivityGroup} from "../models/activity";
-import {User} from "../models/user";
+import {ParticipantUser} from "../models/user";
 import {verifyFirebaseToken} from "../middleware/authMiddleware";
+import {ActivityGroupItem, createGroupActivity} from "../models/groupActivity";
+import {v4 as uuidv4} from "uuid";
+import {getGroupActivityCollection} from "../collections/getGroupActivityCollection";
 
 const router = Router()
 console.log("🐀 Initializing /session routes")
@@ -27,7 +29,11 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         return res.status(400).json({error: 'Missing required fields'})
     }
 
-    const session = createSession({name, description, picture, activityIds})
+    const session = createSession({
+        name, description, picture, activityIds,
+        open: false,
+        participantIds: []
+    })
     const collection = getSessionCollection()
     await collection.insertOne(session)
 
@@ -62,58 +68,82 @@ router.get('/:sessionId/users', verifyFirebaseToken, async (req: Request, res: R
 })
 
 // Pair Users
-router.post('/:sessionId/pair-users/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {sessionId, activityId} = req.params
+router.post(
+    '/:sessionId/activity-group/:activityId',
+    verifyFirebaseToken,
+    async (req: Request, res: Response) => {
+        try {
+            const {sessionId, activityId} = req.params
 
-    const userCollection = getUserCollection()
-    const sessionCollection = getSessionCollection()
+            const userCollection = getUserCollection()
+            const sessionCollection = getSessionCollection()
 
-    const users = await userCollection.find({sessionId}).toArray()
-    const shuffled = users.sort(() => Math.random() - 0.5)
+            // ✅ Efficient projection: only fetch what is needed
+            const users = await userCollection
+                .find({sessionId}, {projection: {userId: 1, name: 1, icon: 1, description: 1}})
+                .toArray()
 
-    let groupCounter = 1
-
-    for (let i = 0; i < shuffled.length; i += 2) {
-        const userA = shuffled[i]
-        const userB = shuffled[i + 1]
-
-        const updateUserGroup = async (user: User, partner?: User) => {
-            const groupEntry: ActivityGroup = {
-                activityId,
-                group: groupCounter,
-                partnerId: partner?.userId,
-                partnerName: partner?.name
+            if (users.length === 0) {
+                return res.status(404).json({message: 'No users found for this session'})
             }
 
-            const updatedGroups = [
-                ...(user.groups || []).filter(g => g.activityId !== activityId),
-                groupEntry
-            ]
+            // Shuffle users to randomize pairings
+            const shuffled = [...users].sort(() => Math.random() - 0.5)
 
-            await userCollection.updateOne(
-                {userId: user.userId},
-                {$set: {groups: updatedGroups}}
+            const groupColors = ['red', 'blue', 'green', 'yellow']
+            const groups: ActivityGroupItem[] = []
+
+            let groupNumber = 1
+
+            for (let i = 0; i < shuffled.length; i += 2) {
+                const userA = shuffled[i]
+                const userB = shuffled[i + 1]
+
+                const participants: ParticipantUser[] = [
+                    {userId: userA.userId, name: userA.name, icon: userA.icon}
+                ]
+
+                if (userB) {
+                    participants.push({
+                        userId: userB.userId,
+                        name: userB.name,
+                        icon: userB.icon
+                    })
+                }
+
+                const groupColor = groupColors[(groupNumber - 1) % groupColors.length]
+
+                groups.push({
+                    groupId: uuidv4(),
+                    groupNumber,
+                    groupColor,
+                    participants
+                })
+
+                groupNumber++
+            }
+
+            const groupActivity = createGroupActivity({
+                activityId,
+                groups,
+                active: true
+            })
+
+            const groupCollection = getGroupActivityCollection()
+            await groupCollection.insertOne(groupActivity)
+
+            // ✅ Only update the session to push the activityId if not already present
+            await sessionCollection.updateOne(
+                {sessionId},
+                {$addToSet: {activityIds: activityId}}
             )
-        }
 
-        if (userB) {
-            await updateUserGroup(userA, userB)
-            await updateUserGroup(userB, userA)
-        } else {
-            await updateUserGroup(userA)
+            res.status(201).json(groupActivity)
+        } catch (error) {
+            console.error('Error creating group activity:', error)
+            res.status(500).json({message: 'Internal server error'})
         }
-
-        groupCounter++
     }
-
-    // Update the session to include this activityId if not already present
-    await sessionCollection.updateOne(
-        {sessionId},
-        {$addToSet: {activityIds: activityId}}
-    )
-
-    const updatedUsers = await userCollection.find({sessionId}).toArray()
-    res.json({users: updatedUsers})
-})
+)
 
 export default router
