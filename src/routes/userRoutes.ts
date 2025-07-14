@@ -3,6 +3,7 @@ import {getUserCollection} from '../collections/userCollection'
 import {createUser, User} from '../models/user'
 import {verifyFirebaseToken} from "../middleware/authMiddleware";
 import {getSessionCollection} from "../collections/sessionCollection";
+import {getSessionParticipantsCollection} from "../collections/sessionParticipantsCollection";
 
 const router = Router()
 console.log("🐱 Initializing /user routes")
@@ -16,9 +17,8 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     }
 
     const sessionCollection = getSessionCollection()
-    const session = await sessionCollection.findOne({ sessionId })
-
-    if (!session || !session.open) {
+    const session = await sessionCollection.findOne({ sessionId: sessionId, open: true })
+    if (!session) {
         return res.status(400).json({ error: 'Session not found or not open' })
     }
 
@@ -32,8 +32,22 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         userActivityIds: []
     })
 
+    // ✅ Create the user
     const collection = getUserCollection()
     await collection.insertOne(user)
+
+    // ✅ Register user in sessionParticipants
+    const sessionParticipantCollection = getSessionParticipantsCollection()
+    await sessionParticipantCollection.insertOne({
+        sessionId,
+        userId: user.userId
+    })
+    // ✅ Also update the session's participantIds array
+    await sessionCollection.updateOne(
+        { sessionId },
+        { $addToSet: { participantIds: user.userId } }
+    )
+
     res.status(201).json(user)
 })
 
@@ -51,12 +65,12 @@ router.get('/:userId', verifyFirebaseToken, async (req: Request, res: Response) 
 // Update User
 router.put('/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {userId} = req.params
-    const {name, icon, description, sessionId, group} = req.body
+    const {name, icon, description} = req.body
 
     const collection = getUserCollection()
     const updatedUser: User | null = await collection.findOneAndUpdate(
         {userId},
-        {$set: {name, icon, description, sessionId, group}},
+        {$set: {name, icon, description}},
         {returnDocument: 'after'}
     )
 
@@ -67,14 +81,34 @@ router.put('/:userId', verifyFirebaseToken, async (req: Request, res: Response) 
 
 // Delete User
 router.delete('/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {userId} = req.params
-    const collection = getUserCollection()
-    const result = await collection.deleteOne({userId})
+    const { userId } = req.params
 
-    if (result.deletedCount === 0) return res.status(404).json({error: 'User not found'})
+    const userCollection = getUserCollection()
+    const participantCollection = getSessionParticipantsCollection()
+    const sessionCollection = getSessionCollection()
 
-    res.json({success: true})
+    // ✅ Get user to determine sessionId
+    const user = await userCollection.findOne({ userId })
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' })
+    }
+
+    const { sessionId } = user
+
+    // ✅ Delete the user
+    await userCollection.deleteOne({ userId })
+
+    // ✅ Remove from sessionParticipants
+    await participantCollection.deleteOne({ sessionId, userId })
+
+    // ✅ Pull userId from session.participantIds
+    await sessionCollection.updateOne(
+        { sessionId },
+        { $pull: { participantIds: userId } }
+    )
+
+    res.status(200).json({ message: 'User deleted and session references cleaned up' })
 })
-
 
 export default router

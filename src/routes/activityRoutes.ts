@@ -32,6 +32,13 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
 
     const collection = getActivityCollection()
     await collection.insertOne(activity)
+
+    // ✅ Update the session to include the new activityId
+    await sessionCollection.updateOne(
+        { sessionId },
+        { $addToSet: { activityIds: activity.activityId } }
+    )
+
     res.status(201).json(activity)
 })
 
@@ -56,12 +63,31 @@ router.get('/:activityId', verifyFirebaseToken, async (req: Request, res: Respon
 // Delete Activity
 router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const { activityId } = req.params
-    const collection = getActivityCollection()
-    const result = await collection.deleteOne({ activityId })
+    const activityCollection = getActivityCollection()
+    const sessionCollection = getSessionCollection()
 
-    if (result.deletedCount === 0) return res.status(404).json({ error: 'Activity not found' })
+    // 1. Find the activity first to get the sessionId
+    const activity = await activityCollection.findOne({ activityId })
 
-    res.json({ message: 'Activity deleted' })
+    if (!activity) {
+        return res.status(404).json({ error: 'Activity not found' })
+    }
+
+    // 2. Delete the activity
+    const result = await activityCollection.deleteOne({ activityId })
+
+    if (result.deletedCount === 0) {
+        return res.status(500).json({ error: 'Failed to delete activity' })
+    }
+
+    // 3. Update the session to remove the activityId
+    await sessionCollection.updateOne(
+        { sessionId: activity.sessionId },
+        { $pull: { activityIds: activityId } }
+    )
+
+    return res.json({ message: 'Activity deleted and session updated' })
 })
+
 
 export default router

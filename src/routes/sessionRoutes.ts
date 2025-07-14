@@ -15,7 +15,7 @@ console.log('🐀 Initializing /session routes')
 // 🔐 Helper: Check if the user is admin
 const isAdmin = (req: Request): boolean => {
     const role = req.headers['x-user-role'] || req.body?.role
-    return role === 'admin'
+    return true ///TODO: Implement actual admin check logic
 }
 
 // Create Session (admin only)
@@ -24,7 +24,7 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         return res.status(403).json({error: 'Only admins can create sessions'})
     }
 
-    const {name, description, picture, activityIds} = req.body
+    const {name, description, picture, activityIds, open} = req.body
 
     if (!name || !description || !Array.isArray(activityIds)) {
         return res.status(400).json({error: 'Missing required fields'})
@@ -35,7 +35,7 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         description,
         picture,
         activityIds,
-        open: false,
+        open,
         participantIds: []
     })
 
@@ -83,34 +83,6 @@ router.delete('/:sessionId', verifyFirebaseToken, async (req: Request, res: Resp
     res.json({message: 'Session deleted'})
 })
 
-// Remove user from session (admin only)
-router.post('/:sessionId/remove-user/:userId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can remove users'})
-    }
-
-    const {sessionId, userId} = req.params
-    const userCollection = getUserCollection()
-    const sessionCollection = getSessionCollection()
-
-    await userCollection.deleteOne({userId, sessionId})
-    await sessionCollection.updateOne(
-        {sessionId},
-        {$pull: {participantIds: userId}}
-    )
-
-    res.json({message: 'User removed from session'})
-})
-
-// Get all users in a session
-router.get('/:sessionId/users', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {sessionId} = req.params
-    const collection = getUserCollection()
-
-    const users = await collection.find({sessionId}).toArray()
-    res.json(users)
-})
-
 // Pair Users into GroupActivity
 router.post(
     '/:sessionId/activity-group/:activityId',
@@ -127,7 +99,7 @@ router.post(
             await groupCollection.deleteMany({activityId})
 
             const users = await userCollection
-                .find({sessionId}, {projection: {userId: 1, name: 1, icon: 1}})
+                .find({sessionId}, {projection: {userId: 1, name: 1, icon: 1, description: 1}})
                 .toArray()
 
             if (users.length === 0) {

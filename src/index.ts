@@ -8,6 +8,7 @@ import { connectDB } from './db';
 import userRoutes from './routes/userRoutes'
 import sessionRoutes from "./routes/sessionRoutes";
 import activityRoutes from "./routes/activityRoutes";
+import participantRoutes from "./routes/participantRoutes";
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -28,6 +29,7 @@ app.get('/api/firebase-key', (req, res) => {
 
 app.use('/user', userRoutes)
 app.use('/session', sessionRoutes)
+app.use('/sessions', participantRoutes)
 app.use('/activity', activityRoutes)
 
 // Start the server
