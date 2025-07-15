@@ -161,7 +161,7 @@ router.get('/:userId/review/:sessionId', async (req: Request, res: Response) => 
                         result.groupNumber = group.groupNumber
 
                         if (partner) {
-                            const thePartner = await userCollection.findOne({userId: partner.userId})
+                            const fetchedPartner = await userCollection.findOne({userId: partner.userId})
                             const partnerActivity = await userActivityCollection.findOne({
                                 userId: partner.userId,
                                 activityId
@@ -171,7 +171,7 @@ router.get('/:userId/review/:sessionId', async (req: Request, res: Response) => 
                                     notes: partnerActivity.notes,
                                     name: partner.name,
                                     icon: partner.icon,
-                                    email: thePartner?.email || null,
+                                    email: fetchedPartner?.email || null,
                                     description: partner.description
                                 }
                             }
