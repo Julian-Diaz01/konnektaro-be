@@ -9,6 +9,7 @@ import userRoutes from './routes/userRoutes'
 import sessionRoutes from "./routes/sessionRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import participantRoutes from "./routes/participantRoutes";
+import userActivityRoutes from "./routes/userActivityRoutes";
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -31,6 +32,7 @@ app.use('/user', userRoutes)
 app.use('/session', sessionRoutes)
 app.use('/sessions', participantRoutes)
 app.use('/activity', activityRoutes)
+app.use('/user-activity', userActivityRoutes)
 
 // Start the server
 const start = async () => {

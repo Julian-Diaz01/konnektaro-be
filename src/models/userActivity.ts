@@ -3,6 +3,8 @@ import {v4 as uuidv4} from "uuid";
 export interface UserActivity {
     userActivityId: string
     activityId: string
+    userId: string
+    groupId?: string
     date: string
     notes: string
 }
