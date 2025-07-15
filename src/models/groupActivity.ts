@@ -5,6 +5,7 @@ export interface GroupActivity {
     groupActivityId: string
     activityId: string
     groups: ActivityGroupItem[]
+    share: boolean
     active: boolean
 }
 

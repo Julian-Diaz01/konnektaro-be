@@ -133,7 +133,8 @@ router.post(
             const groupActivity = createGroupActivity({
                 activityId,
                 groups,
-                active: true
+                active: true,
+                share: req.body?.share ?? false
             })
 
             await groupCollection.insertOne(groupActivity)
