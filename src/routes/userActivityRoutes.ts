@@ -10,7 +10,7 @@ console.log('🐰 Initializing /user-activity routes')
 // 🆕 Create UserActivity
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {activityId, groupId, notes, userId} = req.body
-console.log('Creating UserActivity:', {activityId, groupId, notes, userId})
+    
     if (!activityId || !notes || !userId) {
         return res.status(400).json({error: 'Missing required fields'})
     }
