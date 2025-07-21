@@ -8,25 +8,19 @@ import {ActivityGroupItem, createGroupActivity} from '../models/groupActivity'
 import {v4 as uuidv4} from 'uuid'
 import {getGroupActivityCollection} from '../collections/getGroupActivityCollection'
 import {chunk} from 'lodash'
+import {isAdmin} from "../hooks/isAdmin";
 
 const router = Router()
 console.log('🐀 Initializing /session routes')
-
-// 🔐 Helper: Check if the user is admin
-const isAdmin = (req: Request): boolean => {
-    const role = req.headers['x-user-role'] || req.body?.role
-    return true ///TODO: Implement actual admin check logic
-}
 
 // Create Session (admin only)
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
         return res.status(403).json({error: 'Only admins can create sessions'})
     }
+    const {name, description, picture} = req.body
 
-    const {name, description, picture, activityIds, open} = req.body
-
-    if (!name || !description || !Array.isArray(activityIds)) {
+    if (!name || !description) {
         return res.status(400).json({error: 'Missing required fields'})
     }
 
@@ -34,8 +28,8 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         name,
         description,
         picture,
-        activityIds,
-        open,
+        activityIds: [],
+        open: true,
         participantIds: []
     })
 
