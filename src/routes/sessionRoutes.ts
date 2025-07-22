@@ -56,10 +56,6 @@ router.get('/:sessionId', verifyFirebaseToken, async (req: Request, res: Respons
 
 // List all sessions (admin only)
 router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can list sessions'})
-    }
-
     const collection = getSessionCollection()
     const sessions = await collection.find({}).toArray()
     res.json(sessions)
