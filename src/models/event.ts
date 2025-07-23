@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 
-export interface Session {
-    sessionId: string
+export interface Event {
+    eventId: string
     name: string
     description: string
     picture?: string
@@ -10,9 +10,9 @@ export interface Session {
     participantIds: string[]
 }
 
-export const createSession = (data: Omit<Session, 'sessionId'>): Session => {
+export const createEvent = (data: Omit<Event, 'eventId'>): Event => {
     return {
-        sessionId: uuidv4(),
+        eventId: uuidv4(),
         ...data
     }
 }

@@ -6,10 +6,10 @@
   },
   "item": [
     {
-      "name": "Session",
+      "name": "Event",
       "item": [
         {
-          "name": "Create Session",
+          "name": "Create Event",
           "request": {
             "method": "POST",
             "header": [
@@ -18,42 +18,42 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Morning Session\",\n  \"description\": \"Berlin walk\",\n  \"picture\": \"https://pic.url\",\n  \"activityIds\": [\"prompt_self_001\", \"prompt_partner_002\"]\n}"
+              "raw": "{\n  \"name\": \"Morning Event\",\n  \"description\": \"Berlin walk\",\n  \"picture\": \"https://pic.url\",\n  \"activityIds\": [\"prompt_self_001\", \"prompt_partner_002\"]\n}"
             },
             "url": {
-              "raw": "http://localhost:8080/session",
+              "raw": "http://localhost:8080/event",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8080",
-              "path": ["session"]
+              "path": ["event"]
             }
           }
         },
         {
-          "name": "Get Session by ID",
+          "name": "Get Event by ID",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:8080/session/{{sessionId}}",
+              "raw": "http://localhost:8080/event/{{eventId}}",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8080",
-              "path": ["session", "{{sessionId}}"]
+              "path": ["event", "{{eventId}}"]
             }
           }
         },
         {
-          "name": "Get All Users in Session",
+          "name": "Get All Users in Event",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:8080/session/{{sessionId}}/users",
+              "raw": "http://localhost:8080/event/{{eventId}}/users",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8080",
-              "path": ["session", "{{sessionId}}", "users"]
+              "path": ["event", "{{eventId}}", "users"]
             }
           }
         },
@@ -63,11 +63,11 @@
             "method": "POST",
             "header": [{ "key": "Authorization", "value": "Bearer {{vault:tour-token}}", "type": "text" }],
             "url": {
-              "raw": "http://localhost:8080/session/{{sessionId}}/pair-users/{{activityId}}",
+              "raw": "http://localhost:8080/event/{{eventId}}/pair-users/{{activityId}}",
               "protocol": "http",
               "host": ["localhost"],
               "port": "8080",
-              "path": ["session", "{{sessionId}}", "pair-users", "{{activityId}}"]
+              "path": ["event", "{{eventId}}", "pair-users", "{{activityId}}"]
             }
           }
         }
@@ -86,7 +86,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"user\"\n}"
+              "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"eventId\": \"{{eventId}}\",\n  \"role\": \"user\"\n}"
             },
             "url": {
               "raw": "http://localhost:8080/user",
@@ -115,7 +115,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n    \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"sessionId\": \"{{sessionId}}\"}"
+              "raw": "{\n  \"name\": \"Gugan\",\n  \"email\": \"gugan@tour.com\",\n    \"icon\": \"🐭\",\n  \"description\": \"The favorite\",\n  \"eventId\": \"{{eventId}}\"}"
             },
             "url": {
               "raw": "http://localhost:8080/user",
@@ -144,7 +144,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Pepe\",\n  \"email\": \"pepe@tour.com\",\n    \"icon\": \"🐎\",\n  \"description\": \"Loves Pokemon and Speed\",\n  \"sessionId\": \"{{sessionId}}\"}"
+              "raw": "{\n  \"name\": \"Pepe\",\n  \"email\": \"pepe@tour.com\",\n    \"icon\": \"🐎\",\n  \"description\": \"Loves Pokemon and Speed\",\n  \"eventId\": \"{{eventId}}\"}"
             },
             "url": {
               "raw": "http://localhost:8080/user",
@@ -173,7 +173,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Twinkle\",\n  \"email\": \"twinkle@tour.com\",\n    \"icon\": \"🐻\",\n  \"description\": \"Loves Pepe and ⭐️\",\n  \"sessionId\": \"{{sessionId}}\"}"
+              "raw": "{\n  \"name\": \"Twinkle\",\n  \"email\": \"twinkle@tour.com\",\n    \"icon\": \"🐻\",\n  \"description\": \"Loves Pepe and ⭐️\",\n  \"eventId\": \"{{eventId}}\"}"
             },
             "url": {
               "raw": "http://localhost:8080/user",
@@ -202,7 +202,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Blu\",\n  \"email\": \"blu@tour.com\",\n    \"icon\": \"🐰\",\n  \"description\": \"Loves her mama\",\n  \"sessionId\": \"{{sessionId}}\"}"
+              "raw": "{\n  \"name\": \"Blu\",\n  \"email\": \"blu@tour.com\",\n    \"icon\": \"🐰\",\n  \"description\": \"Loves her mama\",\n  \"eventId\": \"{{eventId}}\"}"
             },
             "url": {
               "raw": "http://localhost:8080/user",
@@ -237,7 +237,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Gugan Updated\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"Updated desc\",\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"user\"\n}"
+              "raw": "{\n  \"name\": \"Gugan Updated\",\n  \"email\": \"gugan@tour.com\",\n  \"icon\": \"🐭\",\n  \"description\": \"Updated desc\",\n  \"eventId\": \"{{eventId}}\",\n  \"role\": \"user\"\n}"
             },
             "url": {
               "raw": "http://localhost:8080/user/{{userId}}",

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { getActivityCollection } from '../collections/activityCollection'
-import { getSessionCollection } from '../collections/sessionCollection'
+import { getEventCollection } from '../collections/eventCollection'
 import { createActivity } from '../models/activity'
 import { verifyFirebaseToken } from '../middleware/authMiddleware'
 
@@ -9,21 +9,21 @@ console.log('🐈 Initializing /activity routes')
 
 // Create Activity
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const { type, question, title, sessionId } = req.body
+    const { type, question, title, eventId } = req.body
 
-    if (!type || !question || !title || !sessionId) {
+    if (!type || !question || !title || !eventId) {
         return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    const sessionCollection = getSessionCollection()
-    const session = await sessionCollection.findOne({ sessionId })
+    const eventCollection = getEventCollection()
+    const event = await eventCollection.findOne({ eventId })
 
-    if (!session || !session.open) {
-        return res.status(400).json({ error: 'Session not found or not open' })
+    if (!event || !event.open) {
+        return res.status(400).json({ error: 'Event not found or not open' })
     }
 
     const activity = createActivity({
-        sessionId,
+        eventId,
         type,
         question,
         title,
@@ -33,9 +33,9 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const collection = getActivityCollection()
     await collection.insertOne(activity)
 
-    // ✅ Update the session to include the new activityId
-    await sessionCollection.updateOne(
-        { sessionId },
+    // ✅ Update the event to include the new activityId
+    await eventCollection.updateOne(
+        { eventId },
         { $addToSet: { activityIds: activity.activityId } }
     )
 
@@ -64,9 +64,9 @@ router.get('/:activityId', verifyFirebaseToken, async (req: Request, res: Respon
 router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const { activityId } = req.params
     const activityCollection = getActivityCollection()
-    const sessionCollection = getSessionCollection()
+    const eventCollection = getEventCollection()
 
-    // 1. Find the activity first to get the sessionId
+    // 1. Find the activity first to get the eventId
     const activity = await activityCollection.findOne({ activityId })
 
     if (!activity) {
@@ -80,13 +80,13 @@ router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Res
         return res.status(500).json({ error: 'Failed to delete activity' })
     }
 
-    // 3. Update the session to remove the activityId
-    await sessionCollection.updateOne(
-        { sessionId: activity.sessionId },
+    // 3. Update the event to remove the activityId
+    await eventCollection.updateOne(
+        { eventId: activity.eventId },
         { $pull: { activityIds: activityId } }
     )
 
-    return res.json({ message: 'Activity deleted and session updated' })
+    return res.json({ message: 'Activity deleted and event updated' })
 })
 
 

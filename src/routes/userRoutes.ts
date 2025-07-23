@@ -2,8 +2,8 @@ import {Request, Response, Router} from 'express'
 import {getUserCollection} from '../collections/userCollection'
 import {createUser, User} from '../models/user'
 import {verifyFirebaseToken} from "../middleware/authMiddleware";
-import {getSessionCollection} from "../collections/sessionCollection";
-import {getSessionParticipantsCollection} from "../collections/sessionParticipantsCollection";
+import {getEventCollection} from "../collections/eventCollection";
+import {getEventParticipantsCollection} from "../collections/eventParticipantsCollection";
 import {getActivityCollection} from "../collections/activityCollection";
 import {getUserActivityCollection} from "../collections/userActivityCollection";
 import {getGroupActivityCollection} from "../collections/getGroupActivityCollection";
@@ -13,20 +13,20 @@ console.log("🐱 Initializing /user routes")
 
 // Create User
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {sessionId, name, email, icon, description, role} = req.body
+    const {eventId, name, email, icon, description, role} = req.body
 
-    if (!sessionId || !name || !email || !icon || !description || !role) {
+    if (!eventId || !name || !email || !icon || !description || !role) {
         return res.status(400).json({error: 'Missing required fields'})
     }
 
-    const sessionCollection = getSessionCollection()
-    const session = await sessionCollection.findOne({sessionId: sessionId, open: true})
-    if (!session) {
-        return res.status(400).json({error: 'Session not found or not open'})
+    const eventCollection = getEventCollection()
+    const event = await eventCollection.findOne({eventId: eventId, open: true})
+    if (!event) {
+        return res.status(400).json({error: 'Event not found or not open'})
     }
 
     const user = createUser({
-        sessionId,
+        eventId,
         name,
         email,
         icon,
@@ -39,15 +39,15 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const collection = getUserCollection()
     await collection.insertOne(user)
 
-    // ✅ Register user in sessionParticipants
-    const sessionParticipantCollection = getSessionParticipantsCollection()
-    await sessionParticipantCollection.insertOne({
-        sessionId,
+    // ✅ Register user in eventParticipants
+    const eventParticipantCollection = getEventParticipantsCollection()
+    await eventParticipantCollection.insertOne({
+        eventId,
         userId: user.userId
     })
-    // ✅ Also update the session's participantIds array
-    await sessionCollection.updateOne(
-        {sessionId},
+    // ✅ Also update the event's participantIds array
+    await eventCollection.updateOne(
+        {eventId},
         {$addToSet: {participantIds: user.userId}}
     )
 
@@ -87,50 +87,50 @@ router.delete('/:userId', verifyFirebaseToken, async (req: Request, res: Respons
     const {userId} = req.params
 
     const userCollection = getUserCollection()
-    const participantCollection = getSessionParticipantsCollection()
-    const sessionCollection = getSessionCollection()
+    const participantCollection = getEventParticipantsCollection()
+    const eventCollection = getEventCollection()
 
-    // ✅ Get user to determine sessionId
+    // ✅ Get user to determine eventId
     const user = await userCollection.findOne({userId})
 
     if (!user) {
         return res.status(404).json({error: 'User not found'})
     }
 
-    const {sessionId} = user
+    const {eventId} = user
 
     // ✅ Delete the user
     await userCollection.deleteOne({userId})
 
-    // ✅ Remove from sessionParticipants
-    await participantCollection.deleteOne({sessionId, userId})
+    // ✅ Remove from eventParticipants
+    await participantCollection.deleteOne({eventId, userId})
 
-    // ✅ Pull userId from session.participantIds
-    await sessionCollection.updateOne(
-        {sessionId},
+    // ✅ Pull userId from event.participantIds
+    await eventCollection.updateOne(
+        {eventId},
         {$pull: {participantIds: userId}}
     )
 
-    res.status(200).json({message: 'User deleted and session references cleaned up'})
+    res.status(200).json({message: 'User deleted and event references cleaned up'})
 })
 
 // Get User Review
-router.get('/:userId/review/:sessionId', async (req: Request, res: Response) => {
-    const { userId, sessionId } = req.params
+router.get('/:userId/review/:eventId', async (req: Request, res: Response) => {
+    const { userId, eventId } = req.params
 
     const userCollection = getUserCollection()
-    const sessionCollection = getSessionCollection()
+    const eventCollection = getEventCollection()
     const activityCollection = getActivityCollection()
     const userActivityCollection = getUserActivityCollection()
     const groupActivityCollection = getGroupActivityCollection()
 
-    const user = await userCollection.findOne({ userId, sessionId })
-    if (!user) return res.status(404).json({ error: 'User not found in session' })
+    const user = await userCollection.findOne({ userId, eventId })
+    if (!user) return res.status(404).json({ error: 'User not found in event' })
 
-    const session = await sessionCollection.findOne({ sessionId })
-    if (!session) return res.status(404).json({ error: 'Session not found' })
+    const event = await eventCollection.findOne({ eventId })
+    if (!event) return res.status(404).json({ error: 'Event not found' })
 
-    const activityIds = session.activityIds || []
+    const activityIds = event.activityIds || []
 
     const review = await Promise.all(
         activityIds.map(async (activityId) => {
@@ -188,11 +188,11 @@ router.get('/:userId/review/:sessionId', async (req: Request, res: Response) => 
 
     res.json({
         userId,
-        sessionId,
-        session: {
-            name: session.name,
-            description: session.description,
-            picture: session.picture || null
+        eventId,
+        event: {
+            name: event.name,
+            description: event.description,
+            picture: event.picture || null
         },
         activities: filteredReview
     })

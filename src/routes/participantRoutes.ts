@@ -1,15 +1,15 @@
 import { Router, Request, Response } from 'express'
 import { verifyFirebaseToken } from "../middleware/authMiddleware"
-import {getSessionParticipantsCollection} from "../collections/sessionParticipantsCollection";
+import {getEventParticipantsCollection} from "../collections/eventParticipantsCollection";
 
 const router = Router()
-console.log('🙊 Initializing /session/participants routes')
-// Get Participants in Session
-router.get('/:sessionId/participants', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const { sessionId } = req.params
+console.log('🙊 Initializing /event/participants routes')
+// Get Participants in Event
+router.get('/:eventId/participants', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const { eventId } = req.params
 
-    const sessionParticipantsCollection = getSessionParticipantsCollection()
-    const participants = await sessionParticipantsCollection.find({ sessionId }).toArray()
+    const eventParticipantsCollection = getEventParticipantsCollection()
+    const participants = await eventParticipantsCollection.find({ eventId }).toArray()
 
     if (participants.length === 0) return res.status(404).json({ message: 'No participants found' })
 

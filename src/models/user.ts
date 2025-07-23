@@ -4,7 +4,7 @@ export type Role = 'admin' | 'user'
 
 export interface User {
     userId: string
-    sessionId: string
+    eventId: string
     name: string
     email: string
     icon: string

@@ -4,7 +4,7 @@ export type ActivityType = 'self' | 'partner'
 
 export interface Activity {
     activityId: string
-    sessionId: string
+    eventId: string
     date: string
     type: ActivityType
     question: string

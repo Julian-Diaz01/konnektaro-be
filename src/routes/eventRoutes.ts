@@ -1,7 +1,7 @@
 import {Router, Request, Response} from 'express'
-import {getSessionCollection} from '../collections/sessionCollection'
+import {getEventCollection} from '../collections/eventCollection'
 import {getUserCollection} from '../collections/userCollection'
-import {createSession} from '../models/session'
+import {createEvent} from '../models/event'
 import {ParticipantUser} from '../models/user'
 import {verifyFirebaseToken} from '../middleware/authMiddleware'
 import {ActivityGroupItem, createGroupActivity} from '../models/groupActivity'
@@ -11,12 +11,12 @@ import {chunk} from 'lodash'
 import {isAdmin} from "../hooks/isAdmin";
 
 const router = Router()
-console.log('🐀 Initializing /session routes')
+console.log('🐀 Initializing /event routes')
 
-// Create Session (admin only)
+// Create Event (admin only)
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can create sessions'})
+        return res.status(403).json({error: 'Only admins can create events'})
     }
     const {name, description, picture} = req.body
 
@@ -24,7 +24,7 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         return res.status(400).json({error: 'Missing required fields'})
     }
 
-    const session = createSession({
+    const event = createEvent({
         name,
         description,
         picture,
@@ -33,76 +33,76 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         participantIds: []
     })
 
-    const collection = getSessionCollection()
-    await collection.insertOne(session)
+    const collection = getEventCollection()
+    await collection.insertOne(event)
 
-    res.status(201).json(session)
+    res.status(201).json(event)
 })
 
-// Get session by ID (admin only)
-router.get('/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
+// Get event by ID (admin only)
+router.get('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can view sessions'})
+        return res.status(403).json({error: 'Only admins can view events'})
     }
 
-    const {sessionId} = req.params
-    const collection = getSessionCollection()
-    const session = await collection.findOne({sessionId})
+    const {eventId} = req.params
+    const collection = getEventCollection()
+    const event = await collection.findOne({eventId})
 
-    if (!session) return res.status(404).json({error: 'Session not found'})
+    if (!event) return res.status(404).json({error: 'Event not found'})
 
-    res.json(session)
+    res.json(event)
 })
-// Get session Status by ID
-router.get('/status/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {sessionId} = req.params
-    const collection = getSessionCollection()
-    const session = await collection.findOne({sessionId})
+// Get event Status by ID
+router.get('/status/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {eventId} = req.params
+    const collection = getEventCollection()
+    const event = await collection.findOne({eventId})
 
-    if (!session) return res.status(404).json({error: 'Session not found'})
+    if (!event) return res.status(404).json({error: 'Event not found'})
 
-    res.json({"name": session.name, "open": session.open})
+    res.json({"name": event.name, "open": event.open})
 })
-// List all sessions (admin only)
+// List all events (admin only)
 router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const collection = getSessionCollection()
-    const sessions = await collection.find({}).toArray()
-    res.json(sessions)
+    const collection = getEventCollection()
+    const events = await collection.find({}).toArray()
+    res.json(events)
 })
 
-// Delete session (admin only)
-router.delete('/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
+// Delete event (admin only)
+router.delete('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can delete sessions'})
+        return res.status(403).json({error: 'Only admins can delete events'})
     }
 
-    const {sessionId} = req.params
-    const collection = getSessionCollection()
-    await collection.deleteOne({sessionId})
-    res.json({message: 'Session deleted'})
+    const {eventId} = req.params
+    const collection = getEventCollection()
+    await collection.deleteOne({eventId})
+    res.json({message: 'Event deleted'})
 })
 
 // Pair Users into GroupActivity
 router.post(
-    '/:sessionId/activity-group/:activityId',
+    '/:eventId/activity-group/:activityId',
     verifyFirebaseToken,
     async (req: Request, res: Response) => {
         try {
-            const {sessionId, activityId} = req.params
+            const {eventId, activityId} = req.params
 
             const userCollection = getUserCollection()
-            const sessionCollection = getSessionCollection()
+            const eventCollection = getEventCollection()
             const groupCollection = getGroupActivityCollection()
 
             // Remove previous groups for this activity if re-triggered
             await groupCollection.deleteMany({activityId})
 
             const users = await userCollection
-                .find({sessionId}, {projection: {userId: 1, name: 1, icon: 1, description: 1}})
+                .find({eventId}, {projection: {userId: 1, name: 1, icon: 1, description: 1}})
                 .toArray()
 
             if (users.length === 0) {
-                return res.status(404).json({message: 'No users found for this session'})
+                return res.status(404).json({message: 'No users found for this event'})
             }
 
             const shuffled = [...users].sort(() => Math.random() - 0.5)
@@ -138,8 +138,8 @@ router.post(
 
             await groupCollection.insertOne(groupActivity)
 
-            await sessionCollection.updateOne(
-                {sessionId},
+            await eventCollection.updateOne(
+                {eventId},
                 {$addToSet: {activityIds: activityId}}
             )
 

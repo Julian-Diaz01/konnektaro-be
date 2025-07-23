@@ -6,7 +6,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { connectDB } from './db';
 import userRoutes from './routes/userRoutes'
-import sessionRoutes from "./routes/sessionRoutes";
+import eventRoutes from "./routes/eventRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import participantRoutes from "./routes/participantRoutes";
 import userActivityRoutes from "./routes/userActivityRoutes";
@@ -29,8 +29,8 @@ app.get('/api/firebase-key', (req, res) => {
 });
 
 app.use('/user', userRoutes)
-app.use('/session', sessionRoutes)
-app.use('/sessions', participantRoutes)
+app.use('/event', eventRoutes)
+app.use('/events', participantRoutes)
 app.use('/activity', activityRoutes)
 app.use('/user-activity', userActivityRoutes)
 
