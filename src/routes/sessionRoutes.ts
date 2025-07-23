@@ -53,7 +53,16 @@ router.get('/:sessionId', verifyFirebaseToken, async (req: Request, res: Respons
 
     res.json(session)
 })
+// Get session Status by ID
+router.get('/status/:sessionId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const {sessionId} = req.params
+    const collection = getSessionCollection()
+    const session = await collection.findOne({sessionId})
 
+    if (!session) return res.status(404).json({error: 'Session not found'})
+
+    res.json({"name": session.name, "open": session.open})
+})
 // List all sessions (admin only)
 router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const collection = getSessionCollection()
