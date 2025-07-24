@@ -1,4 +1,4 @@
-import { JwtPayload } from 'jsonwebtoken'; // Import for proper type definitions
+import { JwtPayload } from 'jsonwebtoken';
 import jwt from 'jsonwebtoken'
 import { Request } from 'express';
 
