@@ -38,7 +38,37 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
 
     res.status(201).json(event)
 })
+// Update Event (admin only)
+router.patch('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+        return res.status(403).json({error: 'Only admins can edit events'})
+    }
 
+    const {eventId} = req.params
+    const {name, description, picture, open} = req.body
+
+    if (!eventId) {
+        return res.status(400).json({error: 'Missing event ID'})
+    }
+
+    const collection = getEventCollection()
+    const existing = await collection.findOne({eventId})
+
+    if (!existing) {
+        return res.status(404).json({error: 'Event not found'})
+    }
+
+    const updatedFields: Partial<typeof existing> = {}
+    if (name) updatedFields.name = name
+    if (description) updatedFields.description = description
+    if (picture !== undefined) updatedFields.picture = picture
+    if (open !== undefined) updatedFields.open = open
+
+    await collection.updateOne({eventId}, {$set: updatedFields})
+    const updatedEvent = await collection.findOne({eventId})
+
+    res.json(updatedEvent)
+})
 // Get event by ID (admin only)
 router.get('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
