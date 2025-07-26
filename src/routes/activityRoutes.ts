@@ -59,7 +59,15 @@ router.get('/:activityId', verifyFirebaseToken, async (req: Request, res: Respon
 
     res.json(activity)
 })
+// Get Activities by Event ID
+router.get('/event/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    const { eventId } = req.params
 
+    const collection = getActivityCollection()
+    const activities = await collection.find({ eventId }).toArray()
+
+    res.json(activities)
+})
 // Delete Activity
 router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const { activityId } = req.params
