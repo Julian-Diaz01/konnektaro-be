@@ -3,12 +3,16 @@ import { getActivityCollection } from '../collections/activityCollection'
 import { getEventCollection } from '../collections/eventCollection'
 import { createActivity } from '../models/activity'
 import { verifyFirebaseToken } from '../middleware/authMiddleware'
+import {isAdmin} from "../hooks/isAdmin";
 
 const router = Router()
 console.log('🐈 Initializing /activity routes')
 
 // Create Activity
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+        return res.status(403).json({error: 'Only admins can edit events'})
+    }
     const { type, question, title, eventId } = req.body
 
     if (!type || !question || !title || !eventId) {
@@ -43,7 +47,10 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
 })
 
 // Get All Activities
-router.get('/', verifyFirebaseToken, async (_req: Request, res: Response) => {
+router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+        return res.status(403).json({error: 'Only admins can edit events'})
+    }
     const collection = getActivityCollection()
     const activities = await collection.find({}).toArray()
     res.json(activities)
@@ -70,6 +77,9 @@ router.get('/event/:eventId', verifyFirebaseToken, async (req: Request, res: Res
 })
 // Delete Activity
 router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+        return res.status(403).json({error: 'Only admins can edit events'})
+    }
     const { activityId } = req.params
     const activityCollection = getActivityCollection()
     const eventCollection = getEventCollection()
