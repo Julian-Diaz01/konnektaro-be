@@ -13,9 +13,9 @@ console.log("🐱 Initializing /user routes")
 
 // Create User
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const {eventId, name, email, icon, description, role} = req.body
+    const {eventId, name, email, icon, description, role, userId} = req.body
 
-    if (!eventId || !name || !email || !icon || !description || !role) {
+    if (!eventId || !name || !email || !icon || !description || !role || !userId) {
         return res.status(400).json({error: 'Missing required fields'})
     }
 
@@ -26,6 +26,7 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     }
 
     const user = createUser({
+        userId,
         eventId,
         name,
         email,

@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
-
 export type Role = 'admin' | 'user'
 
 export interface User {
@@ -15,9 +13,8 @@ export interface User {
 
 export type ParticipantUser = Pick<User, 'userId' | 'name' | 'icon' | 'description'>
 
-export const createUser = (data: Omit<User, 'userId'>): User => {
+export const createUser = (data: User): User => {
     return {
-        userId: uuidv4(),
         ...data
     }
 }
