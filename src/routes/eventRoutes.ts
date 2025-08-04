@@ -71,10 +71,6 @@ router.patch('/:eventId', verifyFirebaseToken, async (req: Request, res: Respons
 })
 // Get event by ID (admin only)
 router.get('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can view events'})
-    }
-
     const {eventId} = req.params
     const collection = getEventCollection()
     const event = await collection.findOne({eventId})
