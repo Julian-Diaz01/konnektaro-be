@@ -1,8 +1,8 @@
-import { Router, Request, Response } from 'express'
-import { getActivityCollection } from '../collections/activityCollection'
-import { getEventCollection } from '../collections/eventCollection'
-import { createActivity } from '../models/activity'
-import { verifyFirebaseToken } from '../middleware/authMiddleware'
+import {Router, Request, Response} from 'express'
+import {getActivityCollection} from '../collections/activityCollection'
+import {getEventCollection} from '../collections/eventCollection'
+import {createActivity} from '../models/activity'
+import {verifyFirebaseToken} from '../middleware/authMiddleware'
 import {isAdmin} from "../hooks/isAdmin";
 
 const router = Router()
@@ -10,41 +10,58 @@ console.log('🐈 Initializing /activity routes')
 
 // Create Activity
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-        return res.status(403).json({error: 'Only admins can edit events'})
+    try {
+        if (!isAdmin(req)) {
+            return res.status(403).json({error: 'Only admins can edit events'});
+        }
+
+        const {type, question, title, eventId} = req.body;
+        // Validate required fields
+        if (!type || !question || !title || !eventId) {
+            return res.status(400).json({error: 'Missing required fields'});
+        }
+
+        const eventCollection = getEventCollection();
+        const event = await eventCollection.findOne({eventId});
+
+        // Validate if the event exists and is open
+        if (!event || !event.open) {
+            return res.status(400).json({error: 'Event not found or not open'});
+        }
+
+        // Create the activity
+        const activity = createActivity({
+            eventId,
+            type,
+            question,
+            title,
+            date: new Date().toISOString(),
+        });
+
+        const collection = getActivityCollection();
+        await collection.insertOne(activity);
+
+        // Update the event to include the new activityId
+        await eventCollection.updateOne(
+            {eventId},
+            {$addToSet: {activityIds: activity.activityId}}
+        );
+
+        console.log('Activity created successfully');
+        res.status(201).json(activity);
+    } catch (error) {
+        console.error('Error creating activity:', error);
+
+        // Check if the error is an instance of the Error object
+        if (error instanceof Error) {
+            res.status(500).json({error: 'Internal Server Error', details: error.message});
+        } else {
+            // Fallback for unknown error types
+            res.status(500).json({error: 'Internal Server Error', details: String(error)});
+        }
     }
-    const { type, question, title, eventId } = req.body
 
-    if (!type || !question || !title || !eventId) {
-        return res.status(400).json({ error: 'Missing required fields' })
-    }
-
-    const eventCollection = getEventCollection()
-    const event = await eventCollection.findOne({ eventId })
-
-    if (!event || !event.open) {
-        return res.status(400).json({ error: 'Event not found or not open' })
-    }
-
-    const activity = createActivity({
-        eventId,
-        type,
-        question,
-        title,
-        date: new Date().toISOString()
-    })
-
-    const collection = getActivityCollection()
-    await collection.insertOne(activity)
-
-    // ✅ Update the event to include the new activityId
-    await eventCollection.updateOne(
-        { eventId },
-        { $addToSet: { activityIds: activity.activityId } }
-    )
-
-    res.status(201).json(activity)
-})
+});
 
 // Get All Activities
 router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
@@ -58,20 +75,20 @@ router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
 
 // Get Activity by ID
 router.get('/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const { activityId } = req.params
+    const {activityId} = req.params
     const collection = getActivityCollection()
-    const activity = await collection.findOne({ activityId })
+    const activity = await collection.findOne({activityId})
 
-    if (!activity) return res.status(404).json({ error: 'Activity not found' })
+    if (!activity) return res.status(404).json({error: 'Activity not found'})
 
     res.json(activity)
 })
 // Get Activities by Event ID
 router.get('/event/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
-    const { eventId } = req.params
+    const {eventId} = req.params
 
     const collection = getActivityCollection()
-    const activities = await collection.find({ eventId }).toArray()
+    const activities = await collection.find({eventId}).toArray()
 
     res.json(activities)
 })
@@ -80,31 +97,31 @@ router.delete('/:activityId', verifyFirebaseToken, async (req: Request, res: Res
     if (!isAdmin(req)) {
         return res.status(403).json({error: 'Only admins can edit events'})
     }
-    const { activityId } = req.params
+    const {activityId} = req.params
     const activityCollection = getActivityCollection()
     const eventCollection = getEventCollection()
 
     // 1. Find the activity first to get the eventId
-    const activity = await activityCollection.findOne({ activityId })
+    const activity = await activityCollection.findOne({activityId})
 
     if (!activity) {
-        return res.status(404).json({ error: 'Activity not found' })
+        return res.status(404).json({error: 'Activity not found'})
     }
 
     // 2. Delete the activity
-    const result = await activityCollection.deleteOne({ activityId })
+    const result = await activityCollection.deleteOne({activityId})
 
     if (result.deletedCount === 0) {
-        return res.status(500).json({ error: 'Failed to delete activity' })
+        return res.status(500).json({error: 'Failed to delete activity'})
     }
 
     // 3. Update the event to remove the activityId
     await eventCollection.updateOne(
-        { eventId: activity.eventId },
-        { $pull: { activityIds: activityId } }
+        {eventId: activity.eventId},
+        {$pull: {activityIds: activityId}}
     )
 
-    return res.json({ message: 'Activity deleted and event updated' })
+    return res.json({message: 'Activity deleted and event updated'})
 })
 
 
