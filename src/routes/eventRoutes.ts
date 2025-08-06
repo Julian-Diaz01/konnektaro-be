@@ -95,7 +95,43 @@ router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const events = await collection.find({}).toArray()
     res.json(events)
 })
+// Get all users of an event with only specific fields
+router.get('/:eventId/users', verifyFirebaseToken, async (req: Request, res: Response) => {
+    try {
+        const {eventId} = req.params;
 
+        const eventCollection = getEventCollection();
+        const userCollection = getUserCollection();
+        // Find the event to get participant IDs
+        const event = await eventCollection.findOne({eventId});
+
+        if (!event) {
+            return res.status(404).json({error: 'Event not found'});
+        }
+
+        const participantIds = event.participantIds || [];
+        if (participantIds.length === 0) {
+            return res.json([]); // No participants in the event
+        }
+
+        // Fetch user details for the participant IDs
+        const users = await userCollection
+            .find({userId: {$in: participantIds}})
+            .project({userId: 1, name: 1, email: 1, description: 1, _id: 0})
+            .toArray();
+
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users for event:', error);
+
+        // Type-check and handle the error
+        if (error instanceof Error) {
+            res.status(500).json({error: 'Internal Server Error', details: error.message});
+        } else {
+            res.status(500).json({error: 'Internal Server Error', details: String(error)});
+        }
+    }
+});
 // Delete event (admin only)
 router.delete('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
     if (!isAdmin(req)) {
