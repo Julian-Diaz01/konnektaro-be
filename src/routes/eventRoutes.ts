@@ -164,7 +164,7 @@ router.patch(
 
         await collection.updateOne(
             { eventId },
-            { $set: { activeActivityId: activityId } }
+            { $set: { currentActivityId: activityId } }
         );
 
         // ✅ Emit socket event here

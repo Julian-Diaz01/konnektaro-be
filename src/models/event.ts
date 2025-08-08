@@ -8,7 +8,7 @@ export interface Event {
     activityIds?: string[]
     open: boolean
     participantIds: string[]
-    activeActivityId?: string | null
+    currentActivityId?: string | null
 }
 
 export const createEvent = (data: Omit<Event, 'eventId'>): Event => {
