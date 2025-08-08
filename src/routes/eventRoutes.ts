@@ -146,7 +146,7 @@ router.delete('/:eventId', verifyFirebaseToken, async (req: Request, res: Respon
 })
 // Add active Activity to event (admin only)
 router.patch(
-    '/:eventId/active-activity',
+    '/:eventId/current-activity',
     verifyFirebaseToken,
     async (req: Request, res: Response) => {
         if (!isAdmin(req)) {
