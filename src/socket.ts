@@ -1,16 +1,16 @@
 // socket.ts
-import { Server } from 'socket.io'
-import type { Server as HttpServer } from 'http'
+import {Server} from 'socket.io'
+import type {Server as HttpServer} from 'http'
 
 let io: Server
 
 export function setupSocket(server: HttpServer) {
     io = new Server(server, {
         cors: {
-            origin: "*",
-            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            origin: process.env.FRONTEND_URL,
+            methods: ["PATCH"],
             credentials: true,
-            allowedHeaders: ["Content-Type", "Authorization"]
+            allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
         },
         transports: ['websocket', 'polling'],
         allowEIO3: true,
@@ -20,7 +20,7 @@ export function setupSocket(server: HttpServer) {
         maxHttpBufferSize: 1e6
     })
 
-    console.log('✅ Socket.IO initialized')
+    console.log('🦊 Socket.IO initialized')
 
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id)

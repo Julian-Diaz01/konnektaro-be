@@ -1,29 +1,32 @@
 // index.ts
 import dotenv from 'dotenv'
+
 dotenv.config()
 
-import express, { Request, Response } from 'express'
+import express, {Request, Response} from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-import { createServer } from 'http'
-import { connectDB } from './db'
+import {createServer} from 'http'
+import {connectDB} from './db'
 import userRoutes from './routes/userRoutes'
 import eventRoutes from './routes/eventRoutes'
 import activityRoutes from './routes/activityRoutes'
 import participantRoutes from './routes/participantRoutes'
 import userActivityRoutes from './routes/userActivityRoutes'
-import { setupSocket, getSocketServer } from './socket'
+import {setupSocket, getSocketServer} from './socket'
 
 const app = express()
 const PORT = process.env.PORT || 8080
 
-// Configure CORS to be more permissive for WebSocket connections
-app.use(cors({
-    origin: true,
+const corsOptions = {
+    origin: process.env.FRONTEND_URL,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}))
+    methods: ['PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Content-Length', 'X-Requested-With']
+}
+
+app.use(cors(corsOptions))
 app.use(bodyParser.json())
 
 app.get('/', (req: Request, res: Response) => {
