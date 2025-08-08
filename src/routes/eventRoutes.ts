@@ -9,6 +9,7 @@ import {v4 as uuidv4} from 'uuid'
 import {getGroupActivityCollection} from '../collections/getGroupActivityCollection'
 import {chunk} from 'lodash'
 import {isAdmin} from "../hooks/isAdmin";
+import {emitActivityUpdate} from "../sockets/activitySockets";
 
 const router = Router()
 console.log('🐀 Initializing /event routes')
@@ -143,6 +144,35 @@ router.delete('/:eventId', verifyFirebaseToken, async (req: Request, res: Respon
     await collection.deleteOne({eventId})
     res.json({message: 'Event deleted'})
 })
+// Add active Activity to event (admin only)
+router.patch(
+    '/:eventId/active-activity',
+    verifyFirebaseToken,
+    async (req: Request, res: Response) => {
+        if (!isAdmin(req)) {
+            return res.status(403).json({ error: 'Only admins can set active activity' });
+        }
+
+        const { eventId } = req.params;
+        const { activityId } = req.body;
+
+        const collection = getEventCollection();
+        const event = await collection.findOne({ eventId });
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        await collection.updateOne(
+            { eventId },
+            { $set: { activeActivityId: activityId } }
+        );
+
+        // ✅ Emit socket event here
+        emitActivityUpdate(eventId, activityId);
+
+        res.json({ message: 'Active activity updated' });
+    }
+)
 
 // Pair Users into GroupActivity
 router.post(
