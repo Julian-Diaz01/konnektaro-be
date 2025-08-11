@@ -10,7 +10,7 @@ console.log('🐰 Initializing /user-activity routes')
 // 🆕 Create UserActivity
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {activityId, groupId, notes, userId} = req.body
-    
+
     if (!activityId || !notes || !userId) {
         return res.status(400).json({error: 'Missing required fields'})
     }
@@ -62,7 +62,7 @@ router.get('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req
 // 📝 Update UserActivity (by user & activity)
 router.put('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {userId, activityId} = req.params
-    const {notes} = req.body
+    const {notes, groupId} = req.body
 
     if (!notes) return res.status(400).json({error: 'Missing notes'})
 
@@ -75,7 +75,7 @@ router.put('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req
 
     const result = await collection.updateOne(
         {userId, activityId},
-        {$set: {notes: cleanNotes, date: new Date().toISOString()}}
+        {$set: {notes: cleanNotes, groupId: groupId, date: new Date().toISOString()}}
     )
 
     if (result.matchedCount === 0) return res.status(404).json({error: 'Not found'})
