@@ -186,8 +186,8 @@ router.post(
             const eventCollection = getEventCollection()
             const groupCollection = getGroupActivityCollection()
 
-            // Remove previous groups for this activity if re-triggered
-            await groupCollection.deleteMany({activityId})
+            // Check if GroupActivity already exists for this activity
+            const existingGroupActivity = await groupCollection.findOne({activityId})
 
             const users = await userCollection
                 .find({eventId}, {projection: {userId: 1, name: 1, icon: 1, description: 1}})
@@ -221,23 +221,46 @@ router.post(
                 })
             })
 
-            const groupActivity = createGroupActivity({
-                activityId,
-                groups,
-                active: true,
-                share: req.body?.share ?? false
-            })
+            let groupActivity
+            let responseStatus
 
-            await groupCollection.insertOne(groupActivity)
+            if (existingGroupActivity) {
+                // Update existing GroupActivity with new groups
+                await groupCollection.updateOne(
+                    {activityId},
+                    {
+                        $set: {
+                            groups,
+                            share: req.body?.share ?? existingGroupActivity.share,
+                            active: true
+                        }
+                    }
+                )
+                
+                // Get the updated document
+                groupActivity = await groupCollection.findOne({activityId})
+                responseStatus = 200
+            } else {
+                // Create new GroupActivity
+                groupActivity = createGroupActivity({
+                    activityId,
+                    groups,
+                    active: true,
+                    share: req.body?.share ?? false
+                })
+
+                await groupCollection.insertOne(groupActivity)
+                responseStatus = 201
+            }
 
             await eventCollection.updateOne(
                 {eventId},
                 {$addToSet: {activityIds: activityId}}
             )
 
-            res.status(201).json(groupActivity)
+            res.status(responseStatus).json(groupActivity)
         } catch (error) {
-            console.error('Error creating group activity:', error)
+            console.error('Error creating/updating group activity:', error)
             res.status(500).json({message: 'Internal server error'})
         }
     }
