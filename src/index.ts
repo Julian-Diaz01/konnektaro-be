@@ -14,6 +14,7 @@ import activityRoutes from './routes/activityRoutes'
 import participantRoutes from './routes/participantRoutes'
 import userActivityRoutes from './routes/userActivityRoutes'
 import {setupSocket, getSocketServer} from './socket'
+import groupActivityRoutes from "./routes/groupActivityRoutes";
 
 const app = express()
 const PORT = process.env.PORT || 8080
@@ -62,6 +63,7 @@ app.use('/event', eventRoutes)
 app.use('/events', participantRoutes)
 app.use('/activity', activityRoutes)
 app.use('/user-activity', userActivityRoutes)
+app.use('/group-activity', groupActivityRoutes)
 
 const start = async () => {
     await connectDB()

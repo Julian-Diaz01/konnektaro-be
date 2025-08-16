@@ -9,12 +9,54 @@ import {getUserCollection} from "../collections/userCollection";
 import {getEventCollection} from "../collections/eventCollection";
 
 const router = Router()
-console.log('🐀 Initializing /event routes')
+console.log('🐀 Initializing /group-activity routes')
+
+
+// Fetch GroupActivity by groupActivityId
+router.get('/:groupActivityId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    try {
+        const {groupActivityId} = req.params
+
+        const groupCollection = getGroupActivityCollection()
+        const groupActivity = await groupCollection.findOne({groupActivityId})
+
+        if (!groupActivity) {
+            return res.status(404).json({message: 'Group activity not found'})
+        }
+
+        res.json(groupActivity)
+    } catch (error) {
+        console.error('Error fetching group activity:', error)
+        res.status(500).json({message: 'Internal server error'})
+    }
+})
+
+// Fetch GroupActivity by activityId
+router.get('/activity/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
+    try {
+        const {activityId} = req.params
+
+        const groupCollection = getGroupActivityCollection()
+        const groupActivity = await groupCollection.findOne({activityId})
+
+        if (!groupActivity) {
+            return res.status(404).json({message: 'Group activity not found'})
+        }
+
+        res.json(groupActivity)
+    } catch (error) {
+        console.error('Error fetching group activity:', error)
+        res.status(500).json({message: 'Internal server error'})
+    }
+})
+
+
 // Create GroupActivity to group users into pairs for an activity
 router.post(
-    '/:eventId/activity-group/:activityId',
+    '/:eventId/activity/:activityId',
     verifyFirebaseToken,
     async (req: Request, res: Response) => {
+        console.log('🐀 Creating group activity')
         try {
             const {eventId, activityId} = req.params
 
@@ -101,3 +143,6 @@ router.post(
         }
     }
 )
+
+export default router
+
