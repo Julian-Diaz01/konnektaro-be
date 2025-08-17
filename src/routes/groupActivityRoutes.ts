@@ -7,6 +7,7 @@ import {getGroupActivityCollection} from '../collections/getGroupActivityCollect
 import {chunk} from 'lodash'
 import {getUserCollection} from "../collections/userCollection";
 import {getEventCollection} from "../collections/eventCollection";
+import {emitGroupsCreated} from "../sockets/groupActivitySockets";
 
 const router = Router()
 console.log('🐀 Initializing /group-activity routes')
@@ -135,6 +136,9 @@ router.post(
                 {eventId},
                 {$addToSet: {activityIds: activityId}}
             )
+
+            // Emit socket event for groups created
+            emitGroupsCreated(eventId, activityId)
 
             res.status(responseStatus).json(groupActivity)
         } catch (error) {
