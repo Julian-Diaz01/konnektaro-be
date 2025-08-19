@@ -5,6 +5,7 @@ import {createEvent} from '../models/event'
 import {verifyFirebaseToken} from '../middleware/authMiddleware'
 import {isAdmin} from "../hooks/isAdmin";
 import {emitActivityUpdate} from "../sockets/activitySockets";
+import {updateUserReview} from '../services/reviewService'
 
 const router = Router()
 console.log('🐀 Initializing /event routes')
@@ -165,7 +166,86 @@ router.patch(
         // ✅ Emit socket event here
         emitActivityUpdate(eventId, activityId);
 
+        // ✅ AUTO-UPDATE ALL PARTICIPANT REVIEWS when event activity changes
+        try {
+            const event = await collection.findOne({ eventId });
+            if (event && event.participantIds && event.participantIds.length > 0) {
+                console.log(`🔄 Updating reviews for ${event.participantIds.length} participants after activity change`)
+                
+                for (const userId of event.participantIds) {
+                    try {
+                        await updateUserReview(userId, eventId)
+                        console.log(`✅ Updated review for participant ${userId}`)
+                    } catch (error) {
+                        console.error(`❌ Failed to update review for participant ${userId}:`, error)
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`❌ Failed to update reviews after activity change:`, error)
+            // Don't fail the main request if review updates fail
+        }
+
         res.json({ message: 'Active activity updated' });
+    }
+)
+
+// Add/Remove activities to event (admin only)
+router.patch(
+    '/:eventId/activities',
+    verifyFirebaseToken,
+    async (req: Request, res: Response) => {
+        if (!isAdmin(req)) {
+            return res.status(403).json({ error: 'Only admins can manage event activities' });
+        }
+
+        const { eventId } = req.params;
+        const { action, activityId } = req.body; // action: 'add' or 'remove'
+
+        if (!action || !activityId) {
+            return res.status(400).json({ error: 'Missing action or activityId' });
+        }
+
+        const collection = getEventCollection();
+        const event = await collection.findOne({ eventId });
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        if (action === 'add') {
+            await collection.updateOne(
+                { eventId },
+                { $addToSet: { activityIds: activityId } }
+            );
+        } else if (action === 'remove') {
+            await collection.updateOne(
+                { eventId },
+                { $pull: { activityIds: activityId } }
+            );
+        } else {
+            return res.status(400).json({ error: 'Invalid action. Use "add" or "remove"' });
+        }
+
+        // ✅ AUTO-UPDATE ALL PARTICIPANT REVIEWS when event activities change
+        try {
+            if (event.participantIds && event.participantIds.length > 0) {
+                console.log(`🔄 Updating reviews for ${event.participantIds.length} participants after activities change`)
+                
+                for (const userId of event.participantIds) {
+                    try {
+                        await updateUserReview(userId, eventId)
+                        console.log(`✅ Updated review for participant ${userId}`)
+                    } catch (error) {
+                        console.error(`❌ Failed to update review for participant ${userId}:`, error)
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`❌ Failed to update reviews after activities change:`, error)
+            // Don't fail the main request if review updates fail
+        }
+
+        res.json({ message: `Activity ${action}ed successfully` });
     }
 )
 

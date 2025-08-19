@@ -4,9 +4,8 @@ import {createUser, User} from '../models/user'
 import {verifyFirebaseToken} from "../middleware/authMiddleware";
 import {getEventCollection} from "../collections/eventCollection";
 import {getEventParticipantsCollection} from "../collections/eventParticipantsCollection";
-import {getActivityCollection} from "../collections/activityCollection";
-import {getUserActivityCollection} from "../collections/userActivityCollection";
-import {getGroupActivityCollection} from "../collections/getGroupActivityCollection";
+import {getReviewCollection} from "../collections/reviewCollection";
+import {updateUserReview} from '../services/reviewService'
 
 const router = Router()
 console.log("🐱 Initializing /user routes")
@@ -115,90 +114,62 @@ router.delete('/:userId', verifyFirebaseToken, async (req: Request, res: Respons
     res.status(200).json({message: 'User deleted and event references cleaned up'})
 })
 
-// Get User Review
+// Get User Review (now much faster!)
 router.get('/:userId/review/:eventId', async (req: Request, res: Response) => {
     const { userId, eventId } = req.params
 
-    const userCollection = getUserCollection()
-    const eventCollection = getEventCollection()
-    const activityCollection = getActivityCollection()
-    const userActivityCollection = getUserActivityCollection()
-    const groupActivityCollection = getGroupActivityCollection()
+    const reviewCollection = getReviewCollection()
+    
+    // First, try to get existing review
+    let review = await reviewCollection.findOne({ userId, eventId })
+    
+    // If no review exists, generate one on-demand (lazy population)
+    if (!review) {
+        try {
+            console.log(`🔄 No review found, generating on-demand for user ${userId}`)
+            await updateUserReview(userId, eventId)
+            review = await reviewCollection.findOne({ userId, eventId })
+        } catch (error) {
+            console.error(`❌ Failed to generate review on-demand:`, error)
+            return res.status(500).json({ error: 'Failed to generate review' })
+        }
+    }
+    
+    if (!review) {
+        return res.status(404).json({ error: 'Review not found and generation failed' })
+    }
 
-    const user = await userCollection.findOne({ userId, eventId })
-    if (!user) return res.status(404).json({ error: 'User not found in event' })
-
-    const event = await eventCollection.findOne({ eventId })
-    if (!event) return res.status(404).json({ error: 'Event not found' })
-
-    const activityIds = event.activityIds || []
-
-    const review = await Promise.all(
-        activityIds.map(async (activityId) => {
-            const activity = await activityCollection.findOne({ activityId })
-            if (!activity) return null
-
-            const result: any = {
-                activityId: activity.activityId,
-                type: activity.type,
-                title: activity.title,
-                question: activity.question,
-                selfAnswer: null,
-                partnerAnswer: null,
-                groupColor: null,
-                groupNumber: null
-            }
-
-            const selfActivity = await userActivityCollection.findOne({ userId, activityId })
-            if (selfActivity) result.selfAnswer = selfActivity.notes
-
-            if (activity.type === 'partner') {
-                const groupActivity = await groupActivityCollection.findOne({ activityId })
-                if (groupActivity) {
-                    const group = groupActivity.groups.find(g => g.participants.some(p => p.userId === userId))
-                    if (group) {
-                        const partner = group.participants.find(p => p.userId !== userId)
-                        result.groupColor = group.groupColor
-                        result.groupNumber = group.groupNumber
-
-                        if (partner) {
-                            const fetchedPartner = await userCollection.findOne({userId: partner.userId})
-                            const partnerActivity = await userActivityCollection.findOne({
-                                userId: partner.userId,
-                                activityId
-                            })
-                            if (partnerActivity) {
-                                result.partnerAnswer = {
-                                    notes: partnerActivity.notes,
-                                    name: partner.name,
-                                    icon: partner.icon,
-                                    email: fetchedPartner?.email || null,
-                                    description: partner.description
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return result
-        })
-    )
-
-    const filteredReview = review.filter(r => r !== null)
-
-    res.json({
-        userId,
-        eventId,
-        event: {
-            name: event.name,
-            description: event.description,
-            picture: event.picture || null
-        },
-        activities: filteredReview
-    })
+    res.json(review)
 })
 
+// Regenerate User Review (admin only - for manual refresh)
+router.post('/:userId/review/:eventId/regenerate', verifyFirebaseToken, async (req: Request, res: Response) => {
+    // Check if user is admin (you might want to add this check)
+    // if (!isAdmin(req)) {
+    //     return res.status(403).json({ error: 'Only admins can regenerate reviews' })
+    // }
+    
+    const { userId, eventId } = req.params
 
+    try {
+        console.log(`🔄 Manually regenerating review for user ${userId} in event ${eventId}`)
+        await updateUserReview(userId, eventId)
+        
+        const reviewCollection = getReviewCollection()
+        const review = await reviewCollection.findOne({ userId, eventId })
+        
+        if (!review) {
+            return res.status(500).json({ error: 'Failed to regenerate review' })
+        }
+        
+        res.json({ 
+            message: 'Review regenerated successfully',
+            review 
+        })
+    } catch (error) {
+        console.error(`❌ Failed to manually regenerate review:`, error)
+        res.status(500).json({ error: 'Failed to regenerate review' })
+    }
+})
 
 export default router

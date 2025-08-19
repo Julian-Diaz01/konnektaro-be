@@ -3,6 +3,8 @@ import {createUserActivity} from '../models/userActivity'
 import {verifyFirebaseToken} from '../middleware/authMiddleware'
 import sanitizeHtml from 'sanitize-html'
 import {getUserActivityCollection} from "../collections/userActivityCollection";
+import {updateUserReview} from '../services/reviewService'
+import {getUserCollection} from '../collections/userCollection'
 
 const router = Router()
 console.log('🐰 Initializing /user-activity routes')
@@ -38,6 +40,21 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     })
 
     await collection.insertOne({...userActivity})
+
+    // ✅ AUTO-GENERATE REVIEW after activity completion
+    try {
+        // Get the user to find the eventId
+        const userCollection = getUserCollection()
+        const user = await userCollection.findOne({ userId })
+        
+        if (user && user.eventId) {
+            await updateUserReview(userId, user.eventId)
+            console.log(`✅ Auto-generated review for user ${userId} in event ${user.eventId}`)
+        }
+    } catch (error) {
+        console.error(`❌ Failed to auto-generate review:`, error)
+        // Don't fail the main request if review generation fails
+    }
 
     res.status(201).json(userActivity)
 })
@@ -80,6 +97,21 @@ router.put('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req
 
     if (result.matchedCount === 0) return res.status(404).json({error: 'Not found'})
 
+    // ✅ AUTO-UPDATE REVIEW after activity update
+    try {
+        // Get the user to find the eventId
+        const userCollection = getUserCollection()
+        const user = await userCollection.findOne({ userId })
+        
+        if (user && user.eventId) {
+            await updateUserReview(userId, user.eventId)
+            console.log(`✅ Auto-updated review for user ${userId} in event ${user.eventId}`)
+        }
+    } catch (error) {
+        console.error(`❌ Failed to auto-update review:`, error)
+        // Don't fail the main request if review generation fails
+    }
+
     res.json({message: 'UserActivity updated'})
 })
 
@@ -91,6 +123,21 @@ router.delete('/user/:userId/activity/:activityId', verifyFirebaseToken, async (
     const result = await collection.deleteOne({userId, activityId})
 
     if (result.deletedCount === 0) return res.status(404).json({error: 'Not found'})
+
+    // ✅ AUTO-UPDATE REVIEW after activity deletion
+    try {
+        // Get the user to find the eventId
+        const userCollection = getUserCollection()
+        const user = await userCollection.findOne({ userId })
+        
+        if (user && user.eventId) {
+            await updateUserReview(userId, user.eventId)
+            console.log(`✅ Auto-updated review for user ${userId} in event ${user.eventId} after deletion`)
+        }
+    } catch (error) {
+        console.error(`❌ Failed to auto-update review after deletion:`, error)
+        // Don't fail the main request if review generation fails
+    }
 
     res.json({message: 'UserActivity deleted'})
 })

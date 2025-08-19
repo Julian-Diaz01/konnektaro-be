@@ -8,6 +8,7 @@ import {chunk} from 'lodash'
 import {getUserCollection} from "../collections/userCollection";
 import {getEventCollection} from "../collections/eventCollection";
 import {emitGroupsCreated} from "../sockets/groupActivitySockets";
+import {updateUserReview} from '../services/reviewService'
 
 const router = Router()
 console.log('🐀 Initializing /group-activity routes')
@@ -139,6 +140,24 @@ router.post(
 
             // Emit socket event for groups created
             emitGroupsCreated(eventId, activityId)
+
+            // ✅ AUTO-UPDATE ALL USER REVIEWS after group changes
+            try {
+                const allUserIds = users.map(user => user.userId)
+                console.log(`🔄 Updating reviews for ${allUserIds.length} users after group changes`)
+                
+                for (const userId of allUserIds) {
+                    try {
+                        await updateUserReview(userId, eventId)
+                        console.log(`✅ Updated review for user ${userId}`)
+                    } catch (error) {
+                        console.error(`❌ Failed to update review for user ${userId}:`, error)
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Failed to update reviews after group changes:`, error)
+                // Don't fail the main request if review updates fail
+            }
 
             res.status(responseStatus).json(groupActivity)
         } catch (error) {
