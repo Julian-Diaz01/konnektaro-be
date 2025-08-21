@@ -7,7 +7,7 @@ let io: Server
 export function setupSocket(server: HttpServer) {
     io = new Server(server, {
         cors: {
-            origin: process.env.FRONTEND_URL,
+            origin: [process.env.FRONTEND_URL as string, process.env.FRONTEND_URL2 as string],
             methods: ["PATCH"],
             credentials: true,
             allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
