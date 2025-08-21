@@ -6,7 +6,7 @@ import {getEventCollection} from "../collections/eventCollection";
 import {getEventParticipantsCollection} from "../collections/eventParticipantsCollection";
 import {getReviewCollection} from "../collections/reviewCollection";
 import {updateUserReview} from '../services/reviewService'
-//http://localhost:3000/review?userId=LolCibg5VbTVIg8CKbIkLttGi1I2&eventId=57cbef90-93a9-44f2-b024-9966aeb40964&currentUser=%7B%22name%22%3A%22Gugan%22%2C%22icon%22%3A%22mouse.svg%22%2C%22description%22%3A%22Gugar%22%7D
+
 const router = Router()
 console.log("🐱 Initializing /user routes")
 

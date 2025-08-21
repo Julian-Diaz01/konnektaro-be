@@ -20,7 +20,7 @@ const app = express()
 const PORT = process.env.PORT || 8080
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL,
+    origin: [process.env.FRONTEND_URL as string, process.env.FRONTEND_URL2 as string],
     credentials: true,
     methods: ['PATCH', 'PUT', 'GET', 'POST', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
