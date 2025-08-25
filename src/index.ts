@@ -69,7 +69,7 @@ const start = async () => {
     await connectDB()
 
     const server = createServer(app)
-    setupSocket(server) // ✅ PASS SERVER HERE
+    setupSocket(server)
 
     server.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`)

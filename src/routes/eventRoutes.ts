@@ -6,6 +6,7 @@ import {verifyFirebaseToken} from '../middleware/authMiddleware'
 import {isAdmin} from "../hooks/isAdmin";
 import {emitActivityUpdate} from "../sockets/activitySockets";
 import {updateUserReview} from '../services/reviewService'
+import {getSocketServer} from '../socket'
 
 const router = Router()
 console.log('🐀 Initializing /event routes')
@@ -27,7 +28,8 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         picture,
         activityIds: [],
         open: true,
-        participantIds: []
+        participantIds: [],
+        showReview: false
     })
 
     const collection = getEventCollection()
@@ -248,5 +250,60 @@ router.patch(
         res.json({ message: `Activity ${action}ed successfully` });
     }
 )
+
+// Toggle review access for an event (admin only)
+router.patch(
+    '/:eventId/review-access/:action',
+    verifyFirebaseToken,
+    async (req: Request, res: Response) => {
+        if (!isAdmin(req)) {
+            return res.status(403).json({ error: 'Only admins can modify review access' });
+        }
+
+        const { eventId, action } = req.params;
+        // Removed unsafe destructuring from req.body which could be undefined
+        // const { showReview } = req.body;
+
+        if (!['enable', 'disable'].includes(action)) {
+            return res.status(400).json({ error: 'Invalid action. Use "enable" or "disable"' });
+        }
+
+        const collection = getEventCollection();
+        const event = await collection.findOne({ eventId });
+        
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        const newShowReview = action === 'enable';
+        const socketEvent = newShowReview ? 'reviewOn' : 'reviewOff';
+        const message = newShowReview ? 'Review access granted for this event' : 'Review access cancelled for this event';
+        const logMessage = newShowReview ? 'enabled' : 'disabled';
+
+        // Update the event
+        await collection.updateOne(
+            { eventId },
+            { $set: { showReview: newShowReview } }
+        );
+
+        // Emit socket event to all users in the event
+        try {
+            const socketServer = getSocketServer();
+            socketServer.to(eventId).emit(socketEvent, {
+                eventId,
+                message,
+                timestamp: new Date().toISOString()
+            });
+            console.log(`✅ Review access ${logMessage} for event ${eventId}`);
+        } catch (error) {
+            console.error(`❌ Failed to emit socket event for event ${eventId}:`, error);
+        }
+
+        res.json({ 
+            message: `Review access ${logMessage}`, 
+            showReview: newShowReview 
+        });
+    }
+);
 
 export default router
