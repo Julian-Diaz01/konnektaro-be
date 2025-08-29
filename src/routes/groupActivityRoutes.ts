@@ -88,7 +88,8 @@ router.post(
                     userId: user.userId,
                     name: user.name,
                     icon: user.icon,
-                    description: user.description
+                    description: user.description,
+                    email: user.email,
                 }))
 
                 const groupColor = groupColors[index % groupColors.length]
