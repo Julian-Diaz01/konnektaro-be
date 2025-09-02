@@ -68,6 +68,32 @@ router.patch('/:eventId', verifyFirebaseToken, async (req: Request, res: Respons
 
     res.json(updatedEvent)
 })
+// Close event (set open=false) — admin only, no body required
+router.patch('/:eventId/close', verifyFirebaseToken, async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+        return res.status(403).json({ error: 'Only admins can close events' })
+    }
+
+    const { eventId } = req.params
+    if (!eventId) {
+        return res.status(400).json({ error: 'Missing event ID' })
+    }
+
+    const collection = getEventCollection()
+    const existing = await collection.findOne({ eventId })
+    if (!existing) {
+        return res.status(404).json({ error: 'Event not found' })
+    }
+
+    if (!existing.open) {
+        return res.status(200).json({ message: 'Event already closed', event: existing })
+    }
+
+    await collection.updateOne({ eventId }, { $set: { open: false } })
+    const updatedEvent = await collection.findOne({ eventId })
+    res.json(updatedEvent)
+})
+
 // Get event by ID (admin only)
 router.get('/:eventId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {eventId} = req.params
@@ -91,7 +117,7 @@ router.get('/status/:eventId', verifyFirebaseToken, async (req: Request, res: Re
 // List all events (admin only)
 router.get('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const collection = getEventCollection()
-    const events = await collection.find({}).toArray()
+    const events = await collection.find({ open: true }).toArray()
     res.json(events)
 })
 // Get all users of an event with only specific fields
