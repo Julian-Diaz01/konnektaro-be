@@ -10,7 +10,7 @@
     "build": "tsc",
     "dev": "ts-node -r dotenv/config src/index.ts",
     "start": "node -r dotenv/config dist/index.js",
-    "build-and-start": "npm run build && npm start",
+    "build-and-start": "npm run build && npm run test && npm start",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
