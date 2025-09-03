@@ -15,6 +15,7 @@ import participantRoutes from './routes/participantRoutes'
 import userActivityRoutes from './routes/userActivityRoutes'
 import {setupSocket, getSocketServer} from './socket'
 import groupActivityRoutes from "./routes/groupActivityRoutes";
+import { scheduleAnonymousUserCleanup } from './config/firebase'
 
 const app = express()
 const PORT = process.env.PORT || 8080
@@ -70,6 +71,9 @@ const start = async () => {
 
     const server = createServer(app)
     setupSocket(server)
+
+    // Start the scheduled anonymous user cleanup task
+    scheduleAnonymousUserCleanup()
 
     server.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`)
