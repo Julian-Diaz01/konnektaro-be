@@ -25,9 +25,16 @@ export function setupSocket(server: HttpServer) {
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id)
 
-        socket.on('joinEvent', (eventId) => {
-            socket.join(eventId)
-            console.log(`User ${socket.id} joined event ${eventId}`)
+        socket.on('joinEvent', (data) => {
+            const { eventId } = data
+            if (!eventId) {
+                socket.emit('error', { message: 'eventId is required' })
+                return
+            }
+            
+            const roomName = `event:${eventId}`
+            socket.join(roomName)
+            console.log(`User ${socket.id} joined room ${roomName}`)
         })
 
         socket.on('disconnect', (reason) => {

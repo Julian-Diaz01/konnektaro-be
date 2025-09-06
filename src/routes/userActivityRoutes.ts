@@ -5,6 +5,7 @@ import sanitizeHtml from 'sanitize-html'
 import {getUserActivityCollection} from "../collections/userActivityCollection";
 import {updateUserReview} from '../services/reviewService'
 import {getUserCollection} from '../collections/userCollection'
+import {emitPartnerNoteUpdated} from '../sockets/partnerNoteSockets'
 
 const router = Router()
 console.log('🐰 Initializing /user-activity routes')
@@ -12,9 +13,20 @@ console.log('🐰 Initializing /user-activity routes')
 // 🆕 Create UserActivity
 router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {activityId, groupId, notes, userId} = req.body
+    const requesterUid = req.user?.uid
 
     if (!activityId || !notes || !userId) {
         return res.status(400).json({error: 'Missing required fields'})
+    }
+    
+    // Size limit for notes (10KB)
+    if (notes.length > 10000) {
+        return res.status(400).json({error: 'Notes too long - maximum 10,000 characters'})
+    }
+    
+    // Verify the requester is creating notes for themselves
+    if (requesterUid !== userId) {
+        return res.status(403).json({error: 'Can only create notes for yourself'})
     }
 
     const collection = getUserActivityCollection()
@@ -50,6 +62,9 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         if (user && user.eventId) {
             await updateUserReview(userId, user.eventId)
             console.log(`✅ Auto-generated review for user ${userId} in event ${user.eventId}`)
+            
+            // 📡 Emit partner note updated event (using the actual userId, not Firebase UID)
+            emitPartnerNoteUpdated(user.eventId, activityId, userId, cleanNotes)
         }
     } catch (error) {
         console.error(`❌ Failed to auto-generate review:`, error)
@@ -69,10 +84,31 @@ router.get('/', verifyFirebaseToken, async (_req: Request, res: Response) => {
 // 🔍 Get UserActivity by userId & activityId
 router.get('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {userId, activityId} = req.params
+    const requesterUid = req.user?.uid
+    
+    if (!requesterUid) {
+        return res.status(401).json({error: 'Authentication required'})
+    }
+
+    // Get the requester's user info to verify they belong to the same event
+    const userCollection = getUserCollection()
+    const requesterUser = await userCollection.findOne({ userId: requesterUid })
+    
+    if (!requesterUser) {
+        return res.status(404).json({error: 'Requester user not found'})
+    }
+
     const collection = getUserActivityCollection()
     const result = await collection.findOne({userId, activityId})
 
     if (!result) return res.status(404).json({error: 'Not found'})
+    
+    // Verify the target user belongs to the same event as the requester
+    const targetUser = await userCollection.findOne({ userId })
+    if (!targetUser || targetUser.eventId !== requesterUser.eventId) {
+        return res.status(403).json({error: 'Access denied - users must be in the same event'})
+    }
+    
     res.json(result)
 })
 
@@ -80,8 +116,19 @@ router.get('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req
 router.put('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req: Request, res: Response) => {
     const {userId, activityId} = req.params
     const {notes, groupId} = req.body
+    const requesterUid = req.user?.uid
 
     if (!notes) return res.status(400).json({error: 'Missing notes'})
+    
+    // Size limit for notes (10KB)
+    if (notes.length > 10000) {
+        return res.status(400).json({error: 'Notes too long - maximum 10,000 characters'})
+    }
+    
+    // Verify the requester is updating their own notes
+    if (requesterUid !== userId) {
+        return res.status(403).json({error: 'Can only update your own notes'})
+    }
 
     const collection = getUserActivityCollection()
 
@@ -106,6 +153,9 @@ router.put('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req
         if (user && user.eventId) {
             await updateUserReview(userId, user.eventId)
             console.log(`✅ Auto-updated review for user ${userId} in event ${user.eventId}`)
+            
+            // 📡 Emit partner note updated event (using the actual userId, not Firebase UID)
+            emitPartnerNoteUpdated(user.eventId, activityId, userId, cleanNotes)
         }
     } catch (error) {
         console.error(`❌ Failed to auto-update review:`, error)

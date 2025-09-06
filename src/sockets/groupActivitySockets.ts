@@ -8,11 +8,12 @@ import { getSocketServer } from "../socket";
 export function emitGroupsCreated(eventId: string, activityId: string) {
     try {
         const io = getSocketServer();
-        io.to(eventId).emit("groupsCreated", { 
+        const roomName = `event:${eventId}`;
+        io.to(roomName).emit("groupsCreated", { 
             eventId, 
             activityId 
         });
-        console.log(`📡 Emitted groupsCreated to event ${eventId} for activity ${activityId}`);
+        console.log(`📡 Emitted groupsCreated to room ${roomName} for activity ${activityId}`);
     } catch (error) {
         console.error('Error emitting groupsCreated event:', error);
     }
