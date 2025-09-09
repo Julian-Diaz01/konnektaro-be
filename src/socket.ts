@@ -23,10 +23,10 @@ export function setupSocket(server: HttpServer) {
     console.log('🦊 Socket.IO initialized')
 
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id)
+        console.log('User connected to socket:', socket.id)
 
         socket.on('joinEvent', (data) => {
-            const { eventId } = data
+            const { eventId, name } = data
             if (!eventId) {
                 socket.emit('error', { message: 'eventId is required' })
                 return
@@ -34,7 +34,7 @@ export function setupSocket(server: HttpServer) {
             
             const roomName = `event:${eventId}`
             socket.join(roomName)
-            console.log(`User ${socket.id} joined room ${roomName}`)
+            console.log(`User ${name ?? "no name"} joined room ${roomName} // socket id: ${socket.id}`)
         })
 
         socket.on('disconnect', (reason) => {
