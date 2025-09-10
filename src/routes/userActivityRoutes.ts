@@ -51,27 +51,37 @@ router.post('/', verifyFirebaseToken, async (req: Request, res: Response) => {
         userId
     })
 
-    await collection.insertOne({...userActivity})
+    const insertResult = await collection.insertOne({...userActivity})
+    console.log(`✅ UserActivity created: ${insertResult.insertedId} for user ${userId}, activity ${activityId}`)
 
-    // ✅ AUTO-GENERATE REVIEW after activity completion
-    try {
-        // Get the user to find the eventId
-        const userCollection = getUserCollection()
-        const user = await userCollection.findOne({ userId })
-        
-        if (user && user.eventId) {
-            await updateUserReview(userId, user.eventId)
-            console.log(`✅ Auto-generated review for user ${userId} in event ${user.eventId}`)
-            
-            // 📡 Emit partner note updated event (using the actual userId, not Firebase UID)
-            emitPartnerNoteUpdated(user.eventId, activityId, userId, cleanNotes)
-        }
-    } catch (error) {
-        console.error(`❌ Failed to auto-generate review:`, error)
-        // Don't fail the main request if review generation fails
+    // Verify the insert was successful by reading it back immediately
+    const insertedActivity = await collection.findOne({_id: insertResult.insertedId})
+    if (!insertedActivity) {
+        console.error(`❌ CRITICAL: UserActivity insert verification failed for ${insertResult.insertedId}`)
+        return res.status(500).json({error: 'Failed to create user activity'})
     }
 
-    res.status(201).json(userActivity)
+    // ✅ AUTO-GENERATE REVIEW after activity completion (async, non-blocking)
+    setImmediate(async () => {
+        try {
+            // Get the user to find the eventId
+            const userCollection = getUserCollection()
+            const user = await userCollection.findOne({ userId })
+            
+            if (user && user.eventId) {
+                await updateUserReview(userId, user.eventId)
+                console.log(`✅ Auto-generated review for user ${userId} in event ${user.eventId}`)
+                
+                // 📡 Emit partner note updated event (using the actual userId, not Firebase UID)
+                emitPartnerNoteUpdated(user.eventId, activityId, userId, cleanNotes)
+            }
+        } catch (error) {
+            console.error(`❌ Failed to auto-generate review:`, error)
+            // Don't fail the main request if review generation fails
+        }
+    })
+
+    res.status(201).json(insertedActivity)
 })
 
 // 📄 Get all UserActivity (admin only)
@@ -143,24 +153,28 @@ router.put('/user/:userId/activity/:activityId', verifyFirebaseToken, async (req
     )
 
     if (result.matchedCount === 0) return res.status(404).json({error: 'Not found'})
+    
+    console.log(`✅ UserActivity updated: ${result.modifiedCount} documents modified for user ${userId}, activity ${activityId}`)
 
-    // ✅ AUTO-UPDATE REVIEW after activity update
-    try {
-        // Get the user to find the eventId
-        const userCollection = getUserCollection()
-        const user = await userCollection.findOne({ userId })
-        
-        if (user && user.eventId) {
-            await updateUserReview(userId, user.eventId)
-            console.log(`✅ Auto-updated review for user ${userId} in event ${user.eventId}`)
+    // ✅ AUTO-UPDATE REVIEW after activity update (async, non-blocking)
+    setImmediate(async () => {
+        try {
+            // Get the user to find the eventId
+            const userCollection = getUserCollection()
+            const user = await userCollection.findOne({ userId })
             
-            // 📡 Emit partner note updated event (using the actual userId, not Firebase UID)
-            emitPartnerNoteUpdated(user.eventId, activityId, userId, cleanNotes)
+            if (user && user.eventId) {
+                await updateUserReview(userId, user.eventId)
+                console.log(`✅ Auto-updated review for user ${userId} in event ${user.eventId}`)
+                
+                // 📡 Emit partner note updated event (using the actual userId, not Firebase UID)
+                emitPartnerNoteUpdated(user.eventId, activityId, userId, cleanNotes)
+            }
+        } catch (error) {
+            console.error(`❌ Failed to auto-update review:`, error)
+            // Don't fail the main request if review generation fails
         }
-    } catch (error) {
-        console.error(`❌ Failed to auto-update review:`, error)
-        // Don't fail the main request if review generation fails
-    }
+    })
 
     res.json({message: 'UserActivity updated'})
 })

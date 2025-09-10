@@ -7,7 +7,15 @@ const client = new MongoClient(uri, {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true
-    }
+    },
+    // Ensure writes are immediately visible and durable
+    writeConcern: {
+        w: 'majority', // Wait for majority of replica set members
+        j: true,       // Wait for journal acknowledgment
+        wtimeout: 5000 // 5 second timeout
+    },
+    // Ensure reads are from primary to avoid replica lag
+    readPreference: 'primary'
 })
 
 let db: Db
