@@ -6,3 +6,4 @@ serviceAccountKey
 /.env.local
 /.env.development.local
 serviceAccountKey.json
+/coverage/
